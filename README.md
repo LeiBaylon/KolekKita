@@ -52,3 +52,15 @@ git config user.email
 
 ### Check any uncommitted changes that might be lost after rebase
 git status
+
+### Check if there is are file that has not been comiited yet
+git pull origin main --rebase
+### Display the Hashes
+git reflog
+### To redo the command or bring it back
+git reset --hard 012626a
+
+## Forced Commit
+
+### Force Commit: Overwrite the remote main branch with your local version
+git push -u origin main --force
