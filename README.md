@@ -3,17 +3,17 @@
 ## Initial Git Setup (first time only)
 
 ```bash
-# Create README file
-echo "# KolekKita" >> README.md
+# Create file
+echo "# ExampleName" >> "File name"
 
 # Initialize a new Git repository
 git init
 
 # Add all files
-git add .
+git add "File name"
 
 # Commit files
-git commit -m "first commit"
+git commit -m "Commit message"
 
 # Rename branch to main
 git branch -M main
@@ -28,7 +28,7 @@ git push -u origin main
 git add .
 
 # Commit changes
-git commit -m "your commit message"
+git commit -m "Commit message"
 
 # Push changes to GitHub
 git push
