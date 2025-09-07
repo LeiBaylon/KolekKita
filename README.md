@@ -2,56 +2,56 @@
 
 ## Initial Git Setup Command
 
-# Create file
+### Create file
 echo "# ExampleName" >> "File name"
 
-# Initialize a new Git repository
+### Initialize a new Git repository
 git init
 
-# Add all files
+### Add all files
 git add "File name"
 
-# Commit files
+### Commit files
 git commit -m "Commit message"
 
-# Rename branch to main
+### Rename branch to main
 git branch -M main
 
-# Add remote repository
+### Add remote repository
 git remote add origin https://github.com/MilSimm/KolekKita-Administrator-Website.git
 
-# Push to GitHub
+### Push to GitHub
 git push -u origin main
 
 
 
 ## Commit Command
 
-# Add changes
+### Add changes
 git add .
 
-# Commit changes
+### Commit changes
 git commit -m "Commit message"
 
-# Push changes to GitHub
+### Push changes to GitHub
 git push
 
 
 
 ## Check Command
 
-# Check the current remote URL
-# Shows the fetch and push URLs for your remote repository.
+### Check the current remote URL
+### Shows the fetch and push URLs for your remote repository.
 git remote -v
 
-# List all local branches
-# Highlights the current branch with an asterisk.
+### List all local branches
+### Highlights the current branch with an asterisk.
 git branch
 
-# Check your Git username and email
-# Shows the Git identity used for commits.
+### Check your Git username and email
+### Shows the Git identity used for commits.
 git config user.name
 git config user.email
 
-# Check any uncommitted changes that might be lost after rebase
+### Check any uncommitted changes that might be lost after rebase
 git status
