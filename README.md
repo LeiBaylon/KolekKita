@@ -1,8 +1,7 @@
 # KolekKita
 
-## Initial Git Setup (first time only)
+## Initial Git Setup Command
 
-```bash
 # Create file
 echo "# ExampleName" >> "File name"
 
@@ -26,7 +25,7 @@ git push -u origin main
 
 
 
-## Normal Commit
+## Commit Command
 
 # Add changes
 git add .
@@ -36,3 +35,23 @@ git commit -m "Commit message"
 
 # Push changes to GitHub
 git push
+
+
+
+## Check Command
+
+# Check the current remote URL
+# Shows the fetch and push URLs for your remote repository.
+git remote -v
+
+# List all local branches
+# Highlights the current branch with an asterisk.
+git branch
+
+# Check your Git username and email
+# Shows the Git identity used for commits.
+git config user.name
+git config user.email
+
+# Check any uncommitted changes that might be lost after rebase
+git status
