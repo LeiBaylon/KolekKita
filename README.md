@@ -41,15 +41,12 @@ git push
 ## Check Command
 
 ### Check the current remote URL
-### Shows the fetch and push URLs for your remote repository.
 git remote -v
 
-### List all local branches
 ### Highlights the current branch with an asterisk.
 git branch
 
-### Check your Git username and email
-### Shows the Git identity used for commits.
+### Check your Git username and email used for commits.
 git config user.name
 git config user.email
 
