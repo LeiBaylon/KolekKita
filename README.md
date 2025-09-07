@@ -35,6 +35,7 @@ git commit -m "Commit message"
 
 ### Push changes to GitHub
 git push
+git push --force
 
 
 
@@ -64,3 +65,8 @@ git reset --hard 012626a
 
 ### Force Commit: Overwrite the remote main branch with your local version
 git push -u origin main --force
+
+
+
+# Useful if you're on a different branch and want to switch back.
+git checkout main
