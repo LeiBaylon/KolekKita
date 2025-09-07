@@ -24,6 +24,10 @@ git remote add origin https://github.com/MilSimm/KolekKita-Administrator-Website
 # Push to GitHub
 git push -u origin main
 
+
+
+## Normal Commit
+
 # Add changes
 git add .
 
