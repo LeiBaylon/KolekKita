@@ -35,7 +35,6 @@ git commit -m "Commit message"
 
 ### Push changes to GitHub
 git push
-git push --force
 
 
 
