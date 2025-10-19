@@ -6,15 +6,18 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { useFirestoreCollection, useFirestoreOperations } from "@/hooks/useFirestore";
 import { useToast } from "@/hooks/use-toast";
 import { orderBy } from "firebase/firestore";
-import { AlertTriangle, Flag, MessageSquare, ShieldCheck, Eye, CheckCircle, XCircle, Clock, Download, Calendar, Filter, ChevronDown } from "lucide-react";
+import { AlertTriangle, Flag, MessageSquare, ShieldCheck, Eye, CheckCircle, XCircle, Clock, Download, Calendar, Filter, ChevronDown, Search } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 
 export default function Moderation() {
   const [filterType, setFilterType] = useState("all"); // New unified filter state
+  const [searchTerm, setSearchTerm] = useState("");
+  const [timePeriod, setTimePeriod] = useState("monthly"); // New time period state
   const [selectedReport, setSelectedReport] = useState(null);
   const [showReviewDialog, setShowReviewDialog] = useState(false);
   const [showActionDialog, setShowActionDialog] = useState(false);
@@ -51,6 +54,37 @@ export default function Moderation() {
     // Fallback to current date
     return new Date();
   };
+
+  // Helper function to filter data by time period
+  const filterByTimePeriod = (data) => {
+    const now = new Date();
+    const filtered = data.filter(item => {
+      const itemDate = getValidDate(item.createdAt);
+      
+      switch(timePeriod) {
+        case 'daily':
+          // Last 30 days
+          const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+          return itemDate >= thirtyDaysAgo;
+        case 'weekly': 
+          // Last 12 weeks (84 days)
+          const twelveWeeksAgo = new Date(now.getTime() - (84 * 24 * 60 * 60 * 1000));
+          return itemDate >= twelveWeeksAgo;
+        case 'monthly':
+          // Last 12 months (365 days)
+          const twelveMonthsAgo = new Date(now.getTime() - (365 * 24 * 60 * 60 * 1000));
+          return itemDate >= twelveMonthsAgo;
+        case 'yearly':
+          // Last 5 years
+          const fiveYearsAgo = new Date(now.getTime() - (5 * 365 * 24 * 60 * 60 * 1000));
+          return itemDate >= fiveYearsAgo;
+        default:
+          return true;
+      }
+    });
+    
+    return filtered;
+  };
   
   // Fetch data with proper ordering
   const { data: users } = useFirestoreCollection("users", [orderBy("createdAt", "desc")]);
@@ -58,14 +92,20 @@ export default function Moderation() {
   const { data: bookings } = useFirestoreCollection("bookings", [orderBy("createdAt", "desc")]);
   const { data: reports } = useFirestoreCollection("reports", [orderBy("createdAt", "desc")]);
   
-  // Real moderation statistics based on actual database data
-  const flaggedReviews = reviews.filter(review => 
+  // Apply time period filtering to all data
+  const filteredUsers = filterByTimePeriod(users);
+  const filteredReviews = filterByTimePeriod(reviews);
+  const filteredBookings = filterByTimePeriod(bookings);
+  const filteredReports = filterByTimePeriod(reports);
+  
+  // Real moderation statistics based on filtered data
+  const flaggedReviews = filteredReviews.filter(review => 
     review.rating <= 2 || 
     (review.comment && review.comment.length < 10) ||
     (review.comment && /spam|fake|bot|test/i.test(review.comment))
   );
   
-  const suspiciousUsers = users.filter(user => 
+  const suspiciousUsers = filteredUsers.filter(user => 
     !user.email || 
     user.email.length < 5 || 
     !user.name || 
@@ -73,7 +113,7 @@ export default function Moderation() {
     /test|fake|spam/i.test(user.name || '')
   );
   
-  const problematicBookings = bookings.filter(booking => 
+  const problematicBookings = filteredBookings.filter(booking => 
     !booking.price || 
     parseFloat(booking.price) === 0 ||
     booking.status === 'cancelled' ||
@@ -81,10 +121,10 @@ export default function Moderation() {
     !booking.dropoffLocation
   );
   
-  // Generate comprehensive report queue from multiple sources
+  // Generate comprehensive report queue from multiple sources with time filtering
   const reportQueue = [
     // Direct reports from database
-    ...reports.map(report => ({
+    ...filteredReports.map(report => ({
       id: report.id,
       type: report.type || 'Content Violation',
       category: report.category || 'General',
@@ -139,12 +179,36 @@ export default function Moderation() {
     
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
-  
-  const moderationStats = {
-    pendingReports: reportQueue.filter(r => r.status === 'pending').length,
-    reviewsToModerate: flaggedReviews.length,
-    contentViolations: flaggedReviews.length + suspiciousUsers.length,
-    actionsTaken: reports.filter(r => r.status === 'resolved').length + problematicBookings.length
+
+  // Function to get time period display text
+  const getTimePeriodText = () => {
+    switch(timePeriod) {
+      case 'daily': return 'Daily';
+      case 'weekly': return 'Weekly'; 
+      case 'monthly': return 'Monthly';
+      case 'yearly': return 'Yearly';
+      default: return 'Monthly';
+    }
+  };
+
+  // Function to get time period description
+  const getTimePeriodDescription = () => {
+    switch(timePeriod) {
+      case 'daily': return 'Last 30 days';
+      case 'weekly': return 'Last 12 weeks';
+      case 'monthly': return 'Last 12 months';
+      case 'yearly': return 'Last 5 years';
+      default: return 'Last 12 months';
+    }
+  };
+
+  // Handle time period change
+  const handleTimePeriodChange = (newPeriod) => {
+    setTimePeriod(newPeriod);
+    toast({
+      title: `Time Period: ${newPeriod.charAt(0).toUpperCase() + newPeriod.slice(1)}`,
+      description: `Showing moderation data for ${getTimePeriodDescription()}`,
+    });
   };
 
   // Export Reports functionality
@@ -280,18 +344,39 @@ export default function Moderation() {
     }
   };
 
-  // Filter reports based on current view
+  // Filter reports based on current view and search term
   const getDisplayedReports = () => {
+    let baseReports;
     switch(filterType) {
       case 'pending':
-        return reportQueue.filter(r => r.status === 'pending');
+        baseReports = reportQueue.filter(r => r.status === 'pending');
+        break;
       case 'resolved':
-        return reportQueue.filter(r => r.status === 'resolved');
+        baseReports = reportQueue.filter(r => r.status === 'resolved');
+        break;
       case 'priority':
-        return reportQueue.filter(r => r.priority === 'High' || r.priority === 'Medium');
+        baseReports = reportQueue.filter(r => r.priority === 'High' || r.priority === 'Medium');
+        break;
       default:
-        return reportQueue;
+        baseReports = reportQueue;
+        break;
     }
+
+    // Apply search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      return baseReports.filter(report => 
+        report.title?.toLowerCase().includes(searchLower) ||
+        report.description?.toLowerCase().includes(searchLower) ||
+        report.reportType?.toLowerCase().includes(searchLower) ||
+        report.reportedBy?.toLowerCase().includes(searchLower) ||
+        report.targetId?.toLowerCase().includes(searchLower) ||
+        report.category?.toLowerCase().includes(searchLower) ||
+        report.notes?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    return baseReports;
   };
 
   const displayedReports = getDisplayedReports();
@@ -329,6 +414,51 @@ export default function Moderation() {
                   <Download className="h-4 w-4 mr-2" />
                   Export Reports
                 </Button>
+
+                {/* Time Period Selector */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="secondary"
+                      size="sm"
+                      className="bg-white/20 text-white hover:bg-white/30"
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      {getTimePeriodText()}
+                      <ChevronDown className="h-4 w-4 ml-2" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem 
+                      onClick={() => handleTimePeriodChange('daily')}
+                      className={timePeriod === 'daily' ? 'bg-gray-50' : ''}
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Daily (Last 30 days)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => handleTimePeriodChange('weekly')}
+                      className={timePeriod === 'weekly' ? 'bg-gray-50' : ''}
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Weekly (Last 12 weeks)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => handleTimePeriodChange('monthly')}
+                      className={timePeriod === 'monthly' ? 'bg-gray-50' : ''}
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Monthly (Last 12 months)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => handleTimePeriodChange('yearly')}
+                      className={timePeriod === 'yearly' ? 'bg-gray-50' : ''}
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Yearly (Last 5 years)
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -351,10 +481,10 @@ export default function Moderation() {
                         setFilterType('all');
                         toast({
                           title: "All Reports",
-                          description: `Showing all ${reportQueue.length} reports`
+                          description: `Showing all ${reportQueue.length} reports for ${getTimePeriodDescription()}`
                         });
                       }}
-                      className={filterType === 'all' ? 'bg-muted' : ''}
+                      className={filterType === 'all' ? 'bg-gray-50' : ''}
                     >
                       <MessageSquare className="h-4 w-4 mr-2" />
                       All Reports
@@ -365,10 +495,10 @@ export default function Moderation() {
                         const pendingCount = reportQueue.filter(r => r.status === 'pending').length;
                         toast({
                           title: "Pending Reports",
-                          description: `Showing ${pendingCount} pending reports`
+                          description: `Showing ${pendingCount} pending reports for ${getTimePeriodDescription()}`
                         });
                       }}
-                      className={filterType === 'pending' ? 'bg-muted' : ''}
+                      className={filterType === 'pending' ? 'bg-gray-50' : ''}
                     >
                       <Clock className="h-4 w-4 mr-2" />
                       View Pending
@@ -379,10 +509,10 @@ export default function Moderation() {
                         const resolvedCount = reportQueue.filter(r => r.status === 'resolved').length;
                         toast({
                           title: "Resolved Reports",
-                          description: `Showing ${resolvedCount} resolved reports`
+                          description: `Showing ${resolvedCount} resolved reports for ${getTimePeriodDescription()}`
                         });
                       }}
-                      className={filterType === 'resolved' ? 'bg-muted' : ''}
+                      className={filterType === 'resolved' ? 'bg-gray-50' : ''}
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />
                       View Resolved
@@ -393,10 +523,10 @@ export default function Moderation() {
                         const priorityCount = reportQueue.filter(r => r.priority === 'High' || r.priority === 'Medium').length;
                         toast({
                           title: "Priority Reports",
-                          description: `Showing ${priorityCount} priority reports`
+                          description: `Showing ${priorityCount} priority reports for ${getTimePeriodDescription()}`
                         });
                       }}
-                      className={filterType === 'priority' ? 'bg-muted' : ''}
+                      className={filterType === 'priority' ? 'bg-gray-50' : ''}
                     >
                       <Flag className="h-4 w-4 mr-2" />
                       View Priority Level
@@ -408,67 +538,74 @@ export default function Moderation() {
           </CardContent>
         </Card>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Pending Reports</p>
-                  <p className="text-3xl font-bold text-green-900 dark:text-green-100">{moderationStats.pendingReports}</p>
-                </div>
-                <div className="w-12 h-12 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
-                  <AlertTriangle className="h-6 w-6 text-green-600" />
-                </div>
+        {/* Search and Filters */}
+        <Card className="bg-white border border-gray-200">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Flag className="h-5 w-5 mr-2" />
+                Moderation Directory
               </div>
-            </CardContent>
-          </Card>
+              <div className="text-sm text-gray-600">
+                {getTimePeriodDescription()}
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <Input
+                  placeholder="Search by title, description, reporter, category, type..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Reports</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="resolved">Resolved</SelectItem>
+                  <SelectItem value="priority">Priority</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Reviews to Moderate</p>
-                  <p className="text-3xl font-bold text-green-900 dark:text-green-100">{moderationStats.reviewsToModerate}</p>
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
+              <div className="text-center p-3 bg-white rounded-lg border-green-200 border">
+                <div className="text-lg font-bold text-green-600">
+                  {reportQueue.filter(r => r.status === 'pending').length}
                 </div>
-                <div className="w-12 h-12 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
-                  <MessageSquare className="h-6 w-6 text-green-600" />
-                </div>
+                <div className="text-xs text-green-600">Pending</div>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Content Violations</p>
-                  <p className="text-3xl font-bold text-green-900 dark:text-green-100">{moderationStats.contentViolations}</p>
+              <div className="text-center p-3 bg-white rounded-lg border-green-200 border">
+                <div className="text-lg font-bold text-green-600">
+                  {reportQueue.filter(r => r.status === 'resolved').length}
                 </div>
-                <div className="w-12 h-12 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
-                  <Flag className="h-6 w-6 text-green-600" />
-                </div>
+                <div className="text-xs text-green-600">Resolved</div>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Actions Taken</p>
-                  <p className="text-3xl font-bold text-green-900 dark:text-green-100">{moderationStats.actionsTaken}</p>
+              <div className="text-center p-3 bg-white rounded-lg border-green-200 border">
+                <div className="text-lg font-bold text-green-600">
+                  {reportQueue.filter(r => r.priority === 'High' || r.priority === 'Medium').length}
                 </div>
-                <div className="w-12 h-12 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
-                  <ShieldCheck className="h-6 w-6 text-green-600" />
-                </div>
+                <div className="text-xs text-green-600">Priority</div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+              <div className="text-center p-3 bg-white rounded-lg border-green-200 border">
+                <div className="text-lg font-bold text-green-600">
+                  {displayedReports.length}
+                </div>
+                <div className="text-xs text-green-600">Filtered Results</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Reports Queue */}
-        <Card className="border bg-card">
+        <Card className="bg-white border border-gray-200">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>{filterInfo.title}</span>
@@ -476,14 +613,14 @@ export default function Moderation() {
                 {displayedReports.length} {displayedReports.length === 1 ? 'Report' : 'Reports'}
               </Badge>
             </CardTitle>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-600">
               {filterInfo.description}
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
             {displayedReports.length > 0 ? (
               displayedReports.map((report, index) => (
-                <div key={report.id} className="bg-muted rounded-lg p-6">
+                <div key={report.id} className="bg-white border border-gray-200 rounded-lg p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-4">
                       <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
@@ -503,11 +640,11 @@ export default function Moderation() {
                         )}
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold">{report.type}</h3>
-                        <p className="text-muted-foreground text-sm mt-1">
+                        <h3 className="text-lg font-semibold text-gray-900">{report.type}</h3>
+                        <p className="text-gray-600 text-sm mt-1">
                           Reported by {report.reportedBy} • {new Date(report.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </p>
-                        <p className="text-sm mt-2">{report.description}</p>
+                        <p className="text-sm mt-2 text-gray-900">{report.description}</p>
                         <div className="flex items-center space-x-2 mt-2">
                           <Badge 
                             variant={
@@ -552,7 +689,7 @@ export default function Moderation() {
                 </div>
               ))
             ) : (
-              <div className="text-center py-12 text-muted-foreground">
+              <div className="text-center py-12 text-gray-600">
                 <ShieldCheck className="h-16 w-16 mx-auto mb-4" />
                 <p className="text-lg font-medium">
                   {filterType === 'pending' && "No Pending Reports"}
@@ -581,20 +718,20 @@ export default function Moderation() {
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Report Type</label>
-                    <div className="mt-1 p-3 bg-muted rounded-md">
+                    <label className="text-sm font-medium text-gray-600">Report Type</label>
+                    <div className="mt-1 p-3 bg-gray-50 rounded-md">
                       {selectedReport.type}
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Category</label>
-                    <div className="mt-1 p-3 bg-muted rounded-md">
+                    <label className="text-sm font-medium text-gray-600">Category</label>
+                    <div className="mt-1 p-3 bg-gray-50 rounded-md">
                       {selectedReport.category}
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Priority</label>
-                    <div className="mt-1 p-3 bg-muted rounded-md">
+                    <label className="text-sm font-medium text-gray-600">Priority</label>
+                    <div className="mt-1 p-3 bg-gray-50 rounded-md">
                       <Badge variant={
                         selectedReport.priority === 'High' ? 'destructive' : 
                         selectedReport.priority === 'Medium' ? 'default' : 'secondary'
@@ -604,23 +741,23 @@ export default function Moderation() {
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Reported By</label>
-                    <div className="mt-1 p-3 bg-muted rounded-md">
+                    <label className="text-sm font-medium text-gray-600">Reported By</label>
+                    <div className="mt-1 p-3 bg-gray-50 rounded-md">
                       {selectedReport.reportedBy}
                     </div>
                   </div>
                 </div>
                 
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Description</label>
-                  <div className="mt-1 p-3 bg-muted rounded-md">
+                  <label className="text-sm font-medium text-gray-600">Description</label>
+                  <div className="mt-1 p-3 bg-gray-50 rounded-md">
                     {selectedReport.description}
                   </div>
                 </div>
                 
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Report Date</label>
-                  <div className="mt-1 p-3 bg-muted rounded-md">
+                  <label className="text-sm font-medium text-gray-600">Report Date</label>
+                  <div className="mt-1 p-3 bg-gray-50 rounded-md">
                     {new Date(selectedReport.date).toLocaleString('en-US', {
                       year: 'numeric',
                       month: 'long',

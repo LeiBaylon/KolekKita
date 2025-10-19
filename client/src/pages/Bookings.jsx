@@ -82,7 +82,7 @@ export default function Bookings() {
     <Layout title="Pickup Bookings">
       <div className="space-y-6 animate-in fade-in duration-300">
         {/* Filters and Search */}
-        <Card className="border-gray-100 dark:border-gray-800">
+        <Card className="bg-white border border-gray-200">
           <CardHeader>
             <CardTitle>Filter Bookings</CardTitle>
           </CardHeader>
@@ -114,9 +114,9 @@ export default function Bookings() {
 
         {/* Bookings List */}
         {error && (
-          <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950">
-            <CardContent className="p-6">
-              <div className="text-red-700 dark:text-red-300" data-testid="text-bookings-error">
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="p-4">
+              <div className="text-red-700" data-testid="text-bookings-error">
                 Error loading bookings: {error}
               </div>
             </CardContent>
@@ -124,13 +124,13 @@ export default function Bookings() {
         )}
 
         {!error && filteredBookings.length === 0 && (
-          <Card className="border-gray-100 dark:border-gray-800">
+          <Card className="bg-white border border-gray-200">
             <CardContent className="p-12 text-center">
               <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
                 No bookings found
               </h3>
-              <p className="text-gray-600 dark:text-gray-400" data-testid="text-no-bookings">
+              <p className="text-gray-600" data-testid="text-no-bookings">
                 {searchTerm ? "Try adjusting your search terms" : "No bookings match the selected filters"}
               </p>
             </CardContent>
@@ -140,13 +140,13 @@ export default function Bookings() {
         {!error && filteredBookings.length > 0 && (
           <div className="grid gap-6">
             {filteredBookings.map((booking) => (
-              <Card key={booking.id} className="border-gray-100 dark:border-gray-800" data-testid={`card-booking-${booking.id}`}>
+              <Card key={booking.id} className="bg-white border border-gray-200" data-testid={`card-booking-${booking.id}`}>
                 <CardContent className="p-6">
                   <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                     {/* Booking Info */}
                     <div className="flex-1 space-y-3">
                       <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100" data-testid={`text-booking-id-${booking.id}`}>
+                        <h3 className="text-lg font-semibold text-gray-900" data-testid={`text-booking-id-${booking.id}`}>
                           Booking #{booking.id.slice(0, 8)}
                         </h3>
                         <Badge 
@@ -159,14 +159,14 @@ export default function Bookings() {
 
                       <div className="grid md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                          <div className="flex items-center text-sm text-gray-600 ">
                             <MapPin className="h-4 w-4 mr-2 text-green-500" />
                             <span>From: </span>
                             <span className="font-medium ml-1" data-testid={`text-pickup-${booking.id}`}>
                               {booking.pickupLocation}
                             </span>
                           </div>
-                          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                          <div className="flex items-center text-sm text-gray-600 ">
                             <MapPin className="h-4 w-4 mr-2 text-red-500" />
                             <span>To: </span>
                             <span className="font-medium ml-1" data-testid={`text-dropoff-${booking.id}`}>
@@ -176,7 +176,7 @@ export default function Bookings() {
                         </div>
 
                         <div className="space-y-2">
-                          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                          <div className="flex items-center text-sm text-gray-600 ">
                             <User className="h-4 w-4 mr-2" />
                             <span>Customer: </span>
                             <span className="font-medium ml-1" data-testid={`text-customer-${booking.id}`}>
@@ -184,7 +184,7 @@ export default function Bookings() {
                             </span>
                           </div>
                           {booking.driverId && (
-                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                            <div className="flex items-center text-sm text-gray-600 ">
                               <User className="h-4 w-4 mr-2" />
                               <span>Driver: </span>
                               <span className="font-medium ml-1" data-testid={`text-driver-${booking.id}`}>
@@ -195,7 +195,7 @@ export default function Bookings() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                      <div className="flex items-center gap-4 text-sm text-gray-600 ">
                         <div className="flex items-center">
                           <Clock className="h-4 w-4 mr-1" />
                           <span data-testid={`text-created-${booking.id}`}>
@@ -213,7 +213,7 @@ export default function Bookings() {
                       </div>
 
                       {booking.notes && (
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                        <div className="text-sm text-gray-600 ">
                           <span className="font-medium">Notes: </span>
                           <span data-testid={`text-notes-${booking.id}`}>{booking.notes}</span>
                         </div>

@@ -72,43 +72,43 @@ export default function Tracking() {
       <div className="space-y-6 animate-in fade-in duration-300">
         {/* Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="border-gray-100 dark:border-gray-800">
+          <Card className="border-gray-100 ">
             <CardContent className="p-6">
               <div className="flex items-center">
                 <Users className="h-8 w-8 text-green-500 mr-3" />
                 <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid="text-active-drivers">
+                  <p className="text-2xl font-bold text-gray-900 " data-testid="text-active-drivers">
                     {activeDrivers.length}
                   </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Active Drivers</p>
+                  <p className="text-sm text-gray-600 ">Active Drivers</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-gray-100 dark:border-gray-800">
+          <Card className="border-gray-100 ">
             <CardContent className="p-6">
               <div className="flex items-center">
                 <Navigation className="h-8 w-8 text-blue-500 mr-3" />
                 <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid="text-en-route">
+                  <p className="text-2xl font-bold text-gray-900 " data-testid="text-en-route">
                     {activeDrivers.filter(d => d.status === 'en_route').length}
                   </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">En Route</p>
+                  <p className="text-sm text-gray-600 ">En Route</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-gray-100 dark:border-gray-800">
+          <Card className="border-gray-100 ">
             <CardContent className="p-6">
               <div className="flex items-center">
                 <Clock className="h-8 w-8 text-orange-500 mr-3" />
                 <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100" data-testid="text-active-deliveries">
+                  <p className="text-2xl font-bold text-gray-900 " data-testid="text-active-deliveries">
                     {activeBookings?.length || 0}
                   </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Active Deliveries</p>
+                  <p className="text-sm text-gray-600 ">Active Deliveries</p>
                 </div>
               </div>
             </CardContent>
@@ -119,7 +119,7 @@ export default function Tracking() {
         <LiveTracking />
 
         {/* Driver Status List */}
-        <Card className="border-gray-100 dark:border-gray-800">
+        <Card className="border-gray-100 ">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Users className="h-5 w-5 mr-2" />
@@ -131,19 +131,19 @@ export default function Tracking() {
               {activeDrivers.map((driver) => (
                 <div 
                   key={driver.driverId}
-                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                  className="flex items-center justify-between p-4 bg-gray-50  rounded-lg"
                   data-testid={`driver-status-${driver.driverId}`}
                 >
                   <div className="flex items-center space-x-4">
                     <div className={`w-3 h-3 rounded-full ${getStatusColor(driver.status)} animate-pulse`} />
                     <div>
-                      <h4 className="font-medium text-gray-900 dark:text-gray-100" data-testid={`text-driver-name-${driver.driverId}`}>
+                      <h4 className="font-medium text-gray-900 " data-testid={`text-driver-name-${driver.driverId}`}>
                         {driver.driverName}
                       </h4>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                      <p className="text-sm text-gray-600 ">
                         ID: {driver.driverId}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-500">
+                      <p className="text-xs text-gray-500 ">
                         Location: {driver.lat.toFixed(4)}, {driver.lng.toFixed(4)}
                       </p>
                     </div>
@@ -170,13 +170,13 @@ export default function Tracking() {
 
         {/* Active Bookings */}
         {bookingsLoading ? (
-          <Card className="border-gray-100 dark:border-gray-800">
+          <Card className="border-gray-100 ">
             <CardContent className="p-6">
               <LoadingSpinner className="h-32" />
             </CardContent>
           </Card>
         ) : (
-          <Card className="border-gray-100 dark:border-gray-800">
+          <Card className="border-gray-100 ">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <MapPin className="h-5 w-5 mr-2" />
@@ -185,7 +185,7 @@ export default function Tracking() {
             </CardHeader>
             <CardContent>
               {!activeBookings || activeBookings.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400" data-testid="text-no-active-bookings">
+                <div className="text-center py-8 text-gray-500 " data-testid="text-no-active-bookings">
                   No active bookings at the moment
                 </div>
               ) : (
@@ -193,17 +193,17 @@ export default function Tracking() {
                   {activeBookings.map((booking) => (
                     <div 
                       key={booking.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                      className="flex items-center justify-between p-4 bg-gray-50  rounded-lg"
                       data-testid={`active-booking-${booking.id}`}
                     >
                       <div className="flex-1">
-                        <h4 className="font-medium text-gray-900 dark:text-gray-100">
+                        <h4 className="font-medium text-gray-900 ">
                           #{booking.id.slice(0, 8)}
                         </h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                        <p className="text-sm text-gray-600 ">
                           {booking.pickupLocation} → {booking.dropoffLocation}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-500">
+                        <p className="text-xs text-gray-500 ">
                           Driver: {booking.driverId?.slice(0, 8) || "Unassigned"}
                         </p>
                       </div>

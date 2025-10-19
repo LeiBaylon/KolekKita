@@ -23,10 +23,10 @@ export const BookingsList = () => {
 
   if (loading) {
     return (
-      <Card className="lg:col-span-2 border-gray-100 dark:border-gray-800">
-        <CardHeader className="border-b border-gray-200 dark:border-gray-700">
+      <Card className="lg:col-span-2 border-gray-100 ">
+        <CardHeader className="border-b border-gray-200 ">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Bookings</h3>
+            <h3 className="text-lg font-semibold text-gray-900 ">Recent Bookings</h3>
           </div>
         </CardHeader>
         <CardContent className="p-6">
@@ -38,9 +38,9 @@ export const BookingsList = () => {
 
   if (error) {
     return (
-      <Card className="lg:col-span-2 border-gray-100 dark:border-gray-800">
-        <CardHeader className="border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Bookings</h3>
+      <Card className="lg:col-span-2 border-gray-100 ">
+        <CardHeader className="border-b border-gray-200 ">
+          <h3 className="text-lg font-semibold text-gray-900 ">Recent Bookings</h3>
         </CardHeader>
         <CardContent className="p-6">
           <div className="text-center text-red-500" data-testid="text-bookings-error">
@@ -52,10 +52,10 @@ export const BookingsList = () => {
   }
 
   return (
-    <Card className="lg:col-span-2 border-gray-100 dark:border-gray-800" data-testid="card-recent-bookings">
-      <CardHeader className="border-b border-gray-200 dark:border-gray-700">
+    <Card className="lg:col-span-2 border-gray-100 " data-testid="card-recent-bookings">
+      <CardHeader className="border-b border-gray-200 ">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Recent Bookings</h3>
+          <h3 className="text-lg font-semibold text-gray-900 ">Recent Bookings</h3>
           <Button variant="link" className="text-primary" data-testid="button-view-all-bookings">
             View All
           </Button>
@@ -63,7 +63,7 @@ export const BookingsList = () => {
       </CardHeader>
       <CardContent className="p-6">
         {bookings.length === 0 ? (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400" data-testid="text-no-bookings">
+          <div className="text-center py-8 text-gray-500 " data-testid="text-no-bookings">
             No bookings found
           </div>
         ) : (
@@ -93,7 +93,7 @@ export const BookingsList = () => {
               return (
                 <div 
                   key={booking.id} 
-                  className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="flex items-center justify-between p-4 bg-gray-50  rounded-lg hover:bg-gray-100  transition-colors"
                   data-testid={`card-booking-${booking.id}`}
                 >
                   <div className="flex items-center space-x-4">
@@ -105,13 +105,13 @@ export const BookingsList = () => {
                       <StatusIcon className="h-5 w-5 text-white" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-gray-100" data-testid={`text-booking-id-${booking.id}`}>
+                      <p className="font-medium text-gray-900 " data-testid={`text-booking-id-${booking.id}`}>
                         #{booking.id.slice(0, 8)}
                       </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-300" data-testid={`text-booking-customer-${booking.id}`}>
+                      <p className="text-sm text-gray-600 " data-testid={`text-booking-customer-${booking.id}`}>
                         Customer ID: {booking.customerId?.slice(0, 8)}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400" data-testid={`text-booking-route-${booking.id}`}>
+                      <p className="text-xs text-gray-500 " data-testid={`text-booking-route-${booking.id}`}>
                         {booking.pickupLocation} → {booking.dropoffLocation}
                       </p>
                     </div>

@@ -23,14 +23,14 @@ export const StatsCard = ({
   const isNegative = change < 0;
 
   return (
-    <Card className="border-gray-100 dark:border-gray-800" data-testid={`card-stats-${title.toLowerCase().replace(/\s+/g, '-')}`}>
+    <Card className="border-gray-100 " data-testid={`card-stats-${title.toLowerCase().replace(/\s+/g, '-')}`}>
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400" data-testid={`text-${title.toLowerCase().replace(/\s+/g, '-')}-title`}>
+            <p className="text-sm font-medium text-gray-600 " data-testid={`text-${title.toLowerCase().replace(/\s+/g, '-')}-title`}>
               {title}
             </p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-1" data-testid={`text-${title.toLowerCase().replace(/\s+/g, '-')}-value`}>
+            <p className="text-3xl font-bold text-gray-900  mt-1" data-testid={`text-${title.toLowerCase().replace(/\s+/g, '-')}-value`}>
               {value}
             </p>
             <div className="flex items-center mt-2">

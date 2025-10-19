@@ -3,15 +3,18 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useFirestoreCollection } from "@/hooks/useFirestore";
 import { useToast } from "@/hooks/use-toast";
 import { orderBy } from "firebase/firestore";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { TrendingUp, Users, Activity, ArrowUpIcon, ArrowDownIcon, Package, Recycle, MapPin, Download, Calendar } from "lucide-react";
+import { TrendingUp, Users, Activity, ArrowUpIcon, Package, Recycle, Download, Calendar, BarChart3, PieChart as PieChartIcon, TrendingDown, ChevronDown } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 export default function Analytics() {
   const [dateRange, setDateRange] = useState("7days");
+  const [timeView, setTimeView] = useState("monthly"); // daily, weekly, monthly, yearly
   const { toast } = useToast();
   
   // Helper function to safely convert timestamps to Date objects
@@ -66,6 +69,148 @@ export default function Analytics() {
     collectors: collectors.length,
     pendingVerifications: verifications.filter(v => v.status === 'pending' || !v.status).length
   };
+
+  // Calculate trends and growth rates
+  const calculateTrends = () => {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+    const sixtyDaysAgo = new Date(now.getTime() - (60 * 24 * 60 * 60 * 1000));
+
+    const recentUsers = users.filter(u => getValidDate(u.createdAt) > thirtyDaysAgo).length;
+    const previousUsers = users.filter(u => {
+      const date = getValidDate(u.createdAt);
+      return date > sixtyDaysAgo && date <= thirtyDaysAgo;
+    }).length;
+
+    const recentBookings = bookings.filter(b => getValidDate(b.createdAt) > thirtyDaysAgo).length;
+    const previousBookings = bookings.filter(b => {
+      const date = getValidDate(b.createdAt);
+      return date > sixtyDaysAgo && date <= thirtyDaysAgo;
+    }).length;
+
+    const userTrend = previousUsers > 0 ? ((recentUsers - previousUsers) / previousUsers) * 100 : recentUsers > 0 ? 100 : 0;
+    const bookingTrend = previousBookings > 0 ? ((recentBookings - previousBookings) / previousBookings) * 100 : recentBookings > 0 ? 100 : 0;
+
+    return {
+      userGrowth: userTrend,
+      bookingGrowth: bookingTrend,
+      recentUsers,
+      recentBookings
+    };
+  };
+
+  const trends = calculateTrends();
+
+  // Generate time-based data based on selected view
+  const generateTimeBasedData = () => {
+    const now = new Date();
+    let data = [];
+    
+    switch(timeView) {
+      case 'daily':
+        // Last 30 days
+        for (let i = 29; i >= 0; i--) {
+          const date = new Date(now.getTime() - (i * 24 * 60 * 60 * 1000));
+          const dateStr = date.toISOString().split('T')[0];
+          
+          const dayUsers = users.filter(u => {
+            const userDate = getValidDate(u.createdAt);
+            return userDate.toISOString().split('T')[0] === dateStr;
+          }).length;
+          
+          const dayBookings = bookings.filter(b => {
+            const bookingDate = getValidDate(b.createdAt);
+            return bookingDate.toISOString().split('T')[0] === dateStr;
+          }).length;
+          
+          data.push({
+            period: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            users: dayUsers,
+            bookings: dayBookings,
+            date: dateStr
+          });
+        }
+        break;
+        
+      case 'weekly':
+        // Last 12 weeks
+        for (let i = 11; i >= 0; i--) {
+          const weekStart = new Date(now.getTime() - (i * 7 * 24 * 60 * 60 * 1000));
+          const weekEnd = new Date(weekStart.getTime() + (6 * 24 * 60 * 60 * 1000));
+          
+          const weekUsers = users.filter(u => {
+            const userDate = getValidDate(u.createdAt);
+            return userDate >= weekStart && userDate <= weekEnd;
+          }).length;
+          
+          const weekBookings = bookings.filter(b => {
+            const bookingDate = getValidDate(b.createdAt);
+            return bookingDate >= weekStart && bookingDate <= weekEnd;
+          }).length;
+          
+          data.push({
+            period: `W${12-i}`,
+            users: weekUsers,
+            bookings: weekBookings,
+            weekStart: weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          });
+        }
+        break;
+        
+      case 'yearly':
+        // Last 5 years
+        const currentYear = now.getFullYear();
+        for (let i = 4; i >= 0; i--) {
+          const year = currentYear - i;
+          
+          const yearUsers = users.filter(u => {
+            const userDate = getValidDate(u.createdAt);
+            return userDate.getFullYear() === year;
+          }).length;
+          
+          const yearBookings = bookings.filter(b => {
+            const bookingDate = getValidDate(b.createdAt);
+            return bookingDate.getFullYear() === year;
+          }).length;
+          
+          data.push({
+            period: year.toString(),
+            users: yearUsers,
+            bookings: yearBookings
+          });
+        }
+        break;
+        
+      default: // monthly
+        // Last 12 months
+        for (let i = 11; i >= 0; i--) {
+          const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+          
+          const monthUsers = users.filter(u => {
+            const userDate = getValidDate(u.createdAt);
+            return userDate.getFullYear() === date.getFullYear() && 
+                   userDate.getMonth() === date.getMonth();
+          }).length;
+          
+          const monthBookings = bookings.filter(b => {
+            const bookingDate = getValidDate(b.createdAt);
+            return bookingDate.getFullYear() === date.getFullYear() && 
+                   bookingDate.getMonth() === date.getMonth();
+          }).length;
+          
+          data.push({
+            period: date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+            users: monthUsers,
+            bookings: monthBookings
+          });
+        }
+    }
+    
+    return data;
+  };
+
+  const timeBasedData = generateTimeBasedData();
 
   // Generate user growth data from actual Firebase data with enhanced date handling
   const userGrowthData = (() => {
@@ -168,35 +313,96 @@ export default function Analytics() {
                   <Download className="h-4 w-4 mr-2" />
                   Export Report
                 </Button>
-                <Button 
-                  size="sm" 
-                  className="bg-white/20 text-white hover:bg-white/30"
-                  onClick={() => {
-                    setDateRange(dateRange === "custom" ? "7days" : "custom");
-                    toast({
-                      title: "Date Range",
-                      description: dateRange === "custom" ? "Reset to last 7 days" : "Custom date range enabled"
-                    });
-                  }}
-                >
-                  <Calendar className="h-4 w-4 mr-2" />
-                  {dateRange === "custom" ? "Reset Range" : "Custom Range"}
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      size="sm" 
+                      className="bg-white/20 text-white hover:bg-white/30"
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      {timeView.charAt(0).toUpperCase() + timeView.slice(1)}
+                      <ChevronDown className="h-4 w-4 ml-2" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        setTimeView('daily');
+                        toast({
+                          title: "Time Period: Daily",
+                          description: "Showing analytics for last 30 days"
+                        });
+                      }}
+                      className={timeView === 'daily' ? 'bg-gray-50' : ''}
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Daily (Last 30 days)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        setTimeView('weekly');
+                        toast({
+                          title: "Time Period: Weekly",
+                          description: "Showing analytics for last 12 weeks"
+                        });
+                      }}
+                      className={timeView === 'weekly' ? 'bg-gray-50' : ''}
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Weekly (Last 12 weeks)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        setTimeView('monthly');
+                        toast({
+                          title: "Time Period: Monthly",
+                          description: "Showing analytics for last 12 months"
+                        });
+                      }}
+                      className={timeView === 'monthly' ? 'bg-gray-50' : ''}
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Monthly (Last 12 months)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        setTimeView('yearly');
+                        toast({
+                          title: "Time Period: Yearly", 
+                          description: "Showing analytics for last 5 years"
+                        });
+                      }}
+                      className={timeView === 'yearly' ? 'bg-gray-50' : ''}
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Yearly (Last 5 years)
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Key Stats Grid - Enhanced with more database metrics */}
+        {/* Key Stats Grid - Enhanced with trend indicators */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200">
+          <Card className="bg-white border border-gray-200">
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Total Users</p>
-                  <p className="text-2xl font-bold text-green-900 dark:text-green-100">{analyticsStats.totalUsers.toLocaleString()}</p>
-                  <div className="flex items-center mt-1">
-                    <span className="text-xs text-green-600">Collectors: {analyticsStats.collectors} | Junk Shops: {analyticsStats.junkShops}</span>
+                  <p className="text-sm font-medium text-green-600">Total Users</p>
+                  <p className="text-2xl font-bold text-green-900">{analyticsStats.totalUsers.toLocaleString()}</p>
+                  <div className="flex items-center mt-2">
+                    {trends.userGrowth >= 0 ? (
+                      <ArrowUpIcon className="h-4 w-4 text-green-600 mr-1" />
+                    ) : (
+                      <TrendingDown className="h-4 w-4 text-red-600 mr-1" />
+                    )}
+                    <span className={cn("text-xs font-medium", 
+                      trends.userGrowth >= 0 ? "text-green-600" : "text-red-600"
+                    )}>
+                      {Math.abs(trends.userGrowth).toFixed(1)}% vs last month
+                    </span>
                   </div>
                 </div>
                 <div className="w-10 h-10 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
@@ -206,14 +412,23 @@ export default function Analytics() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200">
+          <Card className="bg-white border border-gray-200">
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Pickups Completed</p>
-                  <p className="text-2xl font-bold text-green-900 dark:text-green-100">{analyticsStats.pickupsCompleted.toLocaleString()}</p>
-                  <div className="flex items-center mt-1">
-                    <span className="text-xs text-green-600">Total Bookings: {bookings.length}</span>
+                  <p className="text-sm font-medium text-green-600">Bookings</p>
+                  <p className="text-2xl font-bold text-green-900">{bookings.length.toLocaleString()}</p>
+                  <div className="flex items-center mt-2">
+                    {trends.bookingGrowth >= 0 ? (
+                      <ArrowUpIcon className="h-4 w-4 text-green-600 mr-1" />
+                    ) : (
+                      <TrendingDown className="h-4 w-4 text-red-600 mr-1" />
+                    )}
+                    <span className={cn("text-xs font-medium", 
+                      trends.bookingGrowth >= 0 ? "text-green-600" : "text-red-600"
+                    )}>
+                      {Math.abs(trends.bookingGrowth).toFixed(1)}% vs last month
+                    </span>
                   </div>
                 </div>
                 <div className="w-10 h-10 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
@@ -223,12 +438,15 @@ export default function Analytics() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200">
+          <Card className="bg-white border border-gray-200">
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Total Weight (kg)</p>
-                  <p className="text-2xl font-bold text-green-900 dark:text-green-100">{analyticsStats.totalWeight.toLocaleString()}</p>
+                  <p className="text-sm font-medium text-green-600">Total Weight (kg)</p>
+                  <p className="text-2xl font-bold text-green-900">{analyticsStats.totalWeight.toLocaleString()}</p>
+                  <div className="flex items-center mt-2">
+                    <span className="text-xs text-green-600">Avg: {completedBookings.length > 0 ? averageWeightPerBooking : 0}kg per pickup</span>
+                  </div>
                 </div>
                 <div className="w-10 h-10 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
                   <Recycle className="h-5 w-5 text-green-600" />
@@ -236,155 +454,232 @@ export default function Analytics() {
               </div>
             </CardContent>
           </Card>
+
+
         </div>
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* User Growth Chart */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-semibold">User Growth</CardTitle>
-              <p className="text-sm text-muted-foreground">Monthly user registration trends by type</p>
-            </CardHeader>
-            <CardContent>
-              {userGrowthData.length > 0 ? (
+        {/* Analytics Charts */}
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Time-based Analytics */}
+            <Card className="bg-white border border-gray-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-semibold flex items-center">
+                  <BarChart3 className="h-5 w-5 mr-2" />
+                  {timeView.charAt(0).toUpperCase() + timeView.slice(1)} Overview
+                </CardTitle>
+                <p className="text-sm text-gray-600">
+                  {timeView === 'daily' && 'Last 30 days performance'}
+                  {timeView === 'weekly' && 'Last 12 weeks performance'}
+                  {timeView === 'monthly' && 'Last 12 months performance'}
+                  {timeView === 'yearly' && 'Last 5 years performance'}
+                </p>
+              </CardHeader>
+              <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={userGrowthData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <BarChart data={timeBasedData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                     <XAxis 
-                      dataKey="month" 
+                      dataKey="period" 
                       tick={{ fontSize: 12 }}
-                      angle={-45}
-                      textAnchor="end"
-                      height={80}
+                      angle={timeView === 'daily' ? -45 : 0}
+                      textAnchor={timeView === 'daily' ? "end" : "middle"}
+                      height={timeView === 'daily' ? 80 : 60}
                     />
-                    <YAxis 
-                      tick={{ fontSize: 12 }}
-                      domain={[0, 'dataMax + 1']}
-                      allowDecimals={false}
-                    />
+                    <YAxis tick={{ fontSize: 12 }} />
                     <Tooltip 
                       contentStyle={{ 
-                        backgroundColor: 'hsl(var(--background))', 
-                        border: '1px solid hsl(var(--border))',
+                        backgroundColor: 'white', 
+                        border: '1px solid #e5e7eb',
                         borderRadius: '6px'
                       }}
-                      formatter={(value, name) => {
-                        const displayName = name === 'users' ? 'Total Users' : 
-                                          name === 'collectors' ? 'Collectors' : 'Junk Shops';
-                        return [value, displayName];
-                      }}
-                      labelFormatter={(label) => `Month: ${label}`}
                     />
-                    <Bar 
-                      dataKey="users" 
-                      fill="url(#userGradient)" 
-                      radius={[4, 4, 0, 0]}
-                      maxBarSize={60}
-                      name="users"
-                    />
-                    <Bar 
-                      dataKey="collectors" 
-                      fill="#22c55e" 
-                      radius={[2, 2, 0, 0]}
-                      maxBarSize={30}
-                      name="collectors"
-                    />
-                    <Bar 
-                      dataKey="junkShops" 
-                      fill="#f59e0b" 
-                      radius={[2, 2, 0, 0]}
-                      maxBarSize={30}
-                      name="junkShops"
-                    />
-                    <defs>
-                      <linearGradient id="userGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#8b5cf6" />
-                        <stop offset="100%" stopColor="#3b82f6" />
-                      </linearGradient>
-                    </defs>
+                    <Bar dataKey="users" fill="#22c55e" name="Users" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="bookings" fill="#3b82f6" name="Bookings" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                  <Users className="h-12 w-12 mb-4 opacity-50" />
-                  <p className="text-lg font-medium">No User Data Yet</p>
-                  <p className="text-sm">User growth chart will appear when users start registering</p>
+              </CardContent>
+            </Card>
+
+            {/* Material Distribution */}
+            <Card className="bg-white border border-gray-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-semibold flex items-center">
+                  <PieChartIcon className="h-5 w-5 mr-2" />
+                  Material Distribution
+                </CardTitle>
+                <p className="text-sm text-gray-600">Breakdown by waste categories</p>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col space-y-4">
+                  {materialData.length > 0 ? (
+                    <>
+                      <ResponsiveContainer width="100%" height={200}>
+                        <PieChart>
+                          <Pie
+                            data={materialData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={40}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                            stroke="none"
+                          >
+                            {materialData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: 'white', 
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '6px'
+                            }}
+                            formatter={(value) => [`${value} kg`, 'Weight']} 
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="grid grid-cols-2 gap-2">
+                        {materialData.map((item, index) => (
+                          <div key={index} className="flex items-center space-x-2">
+                            <div 
+                              className="w-3 h-3 rounded-full" 
+                              style={{ backgroundColor: item.color }}
+                            />
+                            <span className="text-xs text-gray-600">{item.name}</span>
+                            <span className="text-xs font-medium ml-auto">{item.percentage}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-12 text-gray-600">
+                      <Package className="h-12 w-12 mb-4 opacity-50" />
+                      <p className="text-lg font-medium">No Data Available</p>
+                      <p className="text-sm">Material distribution will appear with booking data</p>
+                    </div>
+                  )}
                 </div>
-              )}
-              
-              {/* User Growth Summary */}
-              {userGrowthData.length > 0 && (
-                <div className="mt-4 grid grid-cols-3 gap-4 pt-4 border-t">
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-blue-600">{analyticsStats.totalUsers}</p>
-                    <p className="text-xs text-muted-foreground">Total Users</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-green-600">{analyticsStats.collectors}</p>
-                    <p className="text-xs text-muted-foreground">Collectors</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-bold text-orange-600">{analyticsStats.junkShops}</p>
-                    <p className="text-xs text-muted-foreground">Junk Shops</p>
-                  </div>
-                </div>
-              )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Trends Analysis - Added to Overview */}
+          <Card className="bg-white border border-gray-200">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg font-semibold flex items-center">
+                <TrendingUp className="h-5 w-5 mr-2" />
+                Growth Trends Analysis
+              </CardTitle>
+              <p className="text-sm text-gray-600">
+                Comparative growth analysis across different metrics
+              </p>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={timeBasedData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <defs>
+                    <linearGradient id="usersGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#22c55e" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#22c55e" stopOpacity={0.1}/>
+                    </linearGradient>
+                    <linearGradient id="bookingsGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis 
+                    dataKey="period" 
+                    tick={{ fontSize: 12 }}
+                    angle={timeView === 'daily' ? -45 : 0}
+                    textAnchor={timeView === 'daily' ? "end" : "middle"}
+                    height={timeView === 'daily' ? 80 : 60}
+                  />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'white', 
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '6px'
+                    }}
+                    formatter={(value, name) => [value, name.charAt(0).toUpperCase() + name.slice(1)]}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="users" 
+                    stroke="#22c55e" 
+                    fillOpacity={1} 
+                    fill="url(#usersGradient)" 
+                    strokeWidth={2}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="bookings" 
+                    stroke="#3b82f6" 
+                    fillOpacity={1} 
+                    fill="url(#bookingsGradient)" 
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
 
-          {/* Material Distribution */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-semibold">Material Distribution</CardTitle>
-              <p className="text-sm text-muted-foreground">Breakdown by waste categories</p>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col space-y-4">
-                {materialData.length > 0 ? (
-                  <>
-                    <ResponsiveContainer width="100%" height={200}>
-                      <PieChart>
-                        <Pie
-                          data={materialData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={40}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                          stroke="none"
-                        >
-                          {materialData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value) => [`${value} kg`, 'Weight']} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="grid grid-cols-2 gap-2">
-                      {materialData.map((item, index) => (
-                        <div key={index} className="flex items-center space-x-2">
-                          <div 
-                            className="w-3 h-3 rounded-full" 
-                            style={{ backgroundColor: item.color }}
-                          />
-                          <span className="text-xs text-muted-foreground">{item.name}</span>
-                          <span className="text-xs font-medium ml-auto">{item.percentage}%</span>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                    <Package className="h-12 w-12 mb-4 opacity-50" />
-                    <p className="text-lg font-medium">No Completed Bookings Yet</p>
-                    <p className="text-sm">Material distribution will appear when bookings are completed</p>
+          {/* Trend Summary Cards - Added to Overview */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="bg-white border border-gray-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-blue-600">User Growth Rate</p>
+                    <p className="text-xl font-bold text-blue-900">
+                      {trends.userGrowth >= 0 ? '+' : ''}{trends.userGrowth.toFixed(1)}%
+                    </p>
+                    <p className="text-xs text-blue-600">{trends.recentUsers} new users</p>
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                  {trends.userGrowth >= 0 ? 
+                    <TrendingUp className="h-8 w-8 text-blue-600" /> : 
+                    <TrendingDown className="h-8 w-8 text-red-600" />
+                  }
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white border border-gray-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-purple-600">Booking Growth</p>
+                    <p className="text-xl font-bold text-purple-900">
+                      {trends.bookingGrowth >= 0 ? '+' : ''}{trends.bookingGrowth.toFixed(1)}%
+                    </p>
+                    <p className="text-xs text-purple-600">{trends.recentBookings} new bookings</p>
+                  </div>
+                  {trends.bookingGrowth >= 0 ? 
+                    <TrendingUp className="h-8 w-8 text-purple-600" /> : 
+                    <TrendingDown className="h-8 w-8 text-red-600" />
+                  }
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-white border border-gray-200">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-orange-600">Completion Rate</p>
+                    <p className="text-xl font-bold text-orange-900">
+                      {bookings.length > 0 ? ((completedBookings.length / bookings.length) * 100).toFixed(1) : 0}%
+                    </p>
+                    <p className="text-xs text-orange-600">{completedBookings.length} completed</p>
+                  </div>
+                  <Activity className="h-8 w-8 text-orange-600" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </Layout>

@@ -155,8 +155,8 @@ export const LiveTracking = () => {
 
   if (loading) {
     return (
-      <Card className="border-gray-100 dark:border-gray-800">
-        <CardHeader className="border-b border-gray-200 dark:border-gray-700">
+      <Card className="border-gray-100 ">
+        <CardHeader className="border-b border-gray-200 ">
           <CardTitle className="flex items-center">
             <Navigation className="h-5 w-5 mr-2" />
             Live Tracking
@@ -170,8 +170,8 @@ export const LiveTracking = () => {
   }
 
   return (
-    <Card className="border-gray-100 dark:border-gray-800" data-testid="card-live-tracking">
-      <CardHeader className="border-b border-gray-200 dark:border-gray-700">
+    <Card className="border-gray-100 " data-testid="card-live-tracking">
+      <CardHeader className="border-b border-gray-200 ">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center">
             <Navigation className="h-5 w-5 mr-2" />
@@ -193,12 +193,12 @@ export const LiveTracking = () => {
         <div className="relative">
           <div 
             ref={mapRef} 
-            className="h-80 w-full bg-gray-100 dark:bg-gray-800"
+            className="h-80 w-full bg-gray-100 "
             data-testid="google-map"
           />
           {(typeof window === 'undefined' || !window.google) && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
-              <div className="text-center text-gray-500 dark:text-gray-400">
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-100 ">
+              <div className="text-center text-gray-500 ">
                 <MapPin className="h-12 w-12 mx-auto mb-4" />
                 <p>Google Maps API not configured</p>
                 <p className="text-sm mt-2">Add GOOGLE_MAPS_API_KEY to environment</p>
@@ -208,19 +208,19 @@ export const LiveTracking = () => {
         </div>
         
         {/* Legend */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-t border-gray-200 ">
           <div className="flex items-center justify-center space-x-6 text-sm">
             <div className="flex items-center">
               <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
-              <span className="text-gray-600 dark:text-gray-300">Online Drivers</span>
+              <span className="text-gray-600 ">Online Drivers</span>
             </div>
             <div className="flex items-center">
               <div className="w-4 h-4 bg-blue-500 rounded-full mr-2"></div>
-              <span className="text-gray-600 dark:text-gray-300">Pickup Points</span>
+              <span className="text-gray-600 ">Pickup Points</span>
             </div>
             <div className="flex items-center">
               <div className="w-4 h-4 bg-red-500 rounded-full mr-2"></div>
-              <span className="text-gray-600 dark:text-gray-300">Dropoff Points</span>
+              <span className="text-gray-600 ">Dropoff Points</span>
             </div>
           </div>
         </div>

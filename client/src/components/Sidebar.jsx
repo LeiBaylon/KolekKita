@@ -13,7 +13,8 @@ import {
   Shield,
   BarChart3,
   X,
-  Menu
+  Menu,
+  Bell
 } from "lucide-react";
 
 
@@ -23,6 +24,7 @@ const getMenuItems = () => [
   { id: "analytics", label: "Analytics", icon: BarChart3, path: "/" },
   { id: "users", label: "User Management", icon: Users, path: "/users" },
   { id: "verification", label: "Verification", icon: CheckCircle, path: "/verification" },
+  { id: "notifications", label: "Notifications", icon: Bell, path: "/notifications" },
   { id: "moderation", label: "Moderation", icon: Shield, path: "/moderation" },
 ];
 
@@ -54,14 +56,14 @@ export const Sidebar = ({ isOpen, onClose }) => {
       {/* Sidebar */}
       <div
         className={cn(
-          "bg-white dark:bg-gray-900 shadow-lg w-64 fixed inset-y-0 left-0 transform transition-transform duration-300 ease-in-out z-30",
+          "bg-white  shadow-lg w-64 fixed inset-y-0 left-0 transform transition-transform duration-300 ease-in-out z-30",
           "lg:translate-x-0 lg:static lg:inset-0",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
         data-testid="sidebar"
       >
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-700">
-          <h1 className="text-xl font-bold text-gray-800 dark:text-gray-100" data-testid="sidebar-title">
+        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 ">
+          <h1 className="text-xl font-bold text-gray-800 " data-testid="sidebar-title">
             KolekKita
           </h1>
           <Button
@@ -95,8 +97,8 @@ export const Sidebar = ({ isOpen, onClose }) => {
               <Link key={item.id} href={item.path}>
                 <div
                   className={cn(
-                    "flex items-center px-6 py-3 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer",
-                    isActive && "text-primary bg-blue-50 dark:bg-blue-950 border-r-2 border-primary"
+                    "flex items-center px-6 py-3 text-gray-700  hover:bg-gray-50  transition-colors cursor-pointer",
+                    isActive && "text-primary bg-blue-50  border-r-2 border-primary"
                   )}
                   data-testid={`link-${item.id}`}
                 >

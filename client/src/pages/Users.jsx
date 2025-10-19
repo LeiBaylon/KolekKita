@@ -268,7 +268,7 @@ export default function Users() {
         </Card>
 
         {/* Filters and Search */}
-        <Card className="border-gray-100 dark:border-gray-800">
+        <Card className="bg-white border border-gray-200">
           <CardHeader>
             <CardTitle className="flex items-center">
               <UsersIcon className="h-5 w-5 mr-2" />
@@ -306,64 +306,64 @@ export default function Users() {
             )}
 
             {/* User Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 rounded-lg border-green-200 border">
-                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
+              <div className="text-center p-4 bg-white rounded-lg border-green-200 border">
+                <div className="text-2xl font-bold text-green-600">
                   {allUsers.filter(u => u.role === "admin").length}
                 </div>
-                <div className="text-sm text-green-600 dark:text-green-400">Admins</div>
+                <div className="text-sm text-green-600">Admins</div>
               </div>
-              <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 rounded-lg border-green-200 border">
-                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+              <div className="text-center p-4 bg-white rounded-lg border-green-200 border">
+                <div className="text-2xl font-bold text-green-600">
                   {allUsers.filter(u => u.role === "junk_shop_owner" || u.role === "junkshop").length}
                 </div>
-                <div className="text-sm text-green-600 dark:text-green-400">Junk Shops</div>
+                <div className="text-sm text-green-600">Junk Shops</div>
               </div>
-              <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 rounded-lg border-green-200 border">
-                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+              <div className="text-center p-4 bg-white rounded-lg border-green-200 border">
+                <div className="text-2xl font-bold text-green-600">
                   {allUsers.filter(u => u.role === "collector").length}
                 </div>
-                <div className="text-sm text-green-600 dark:text-green-400">Collectors</div>
+                <div className="text-sm text-green-600">Collectors</div>
               </div>
-              <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 rounded-lg border-green-200 border">
-                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+              <div className="text-center p-4 bg-white rounded-lg border-green-200 border">
+                <div className="text-2xl font-bold text-green-600">
                   {allUsers.filter(u => u.role === "resident" || u.role === "customer").length}
                 </div>
-                <div className="text-sm text-green-600 dark:text-green-400">Residents</div>
+                <div className="text-sm text-green-600">Residents</div>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Users List */}
-        <Card className="border-gray-100 dark:border-gray-800">
+        <Card className="bg-white border border-gray-200">
           <CardContent className="p-0">
             {filteredUsers.length === 0 ? (
-              <div className="text-center py-12 text-gray-500 dark:text-gray-400" data-testid="text-no-users">
+              <div className="text-center py-12 text-gray-500" data-testid="text-no-users">
                 <UsersIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No users found</p>
                 <p className="text-sm mt-2">Try adjusting your search or filter criteria</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              <div className="divide-y divide-gray-200">
                 {filteredUsers.map((user) => (
                   <div 
                     key={user.id}
-                    className="p-6 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="p-6 hover:bg-gray-50 transition-colors"
                     data-testid={`user-item-${user.id}`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
                         <Avatar className="h-12 w-12">
                           <AvatarImage src={user.profilePhoto || ""} alt={user.name} />
-                          <AvatarFallback className="text-lg">
+                          <AvatarFallback className="text-lg bg-blue-600 text-white">
                             {user.name.charAt(0).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         
                         <div className="flex-1">
                           <div className="flex items-center space-x-3">
-                            <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                            <h3 className="font-semibold text-gray-900">
                               {user.name}
                             </h3>
                             <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs">
@@ -377,7 +377,7 @@ export default function Users() {
                             </Badge>
                           </div>
                           
-                          <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600 dark:text-gray-400">
+                          <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600">
                             <div className="flex items-center">
                               <Mail className="h-4 w-4 mr-1" />
                               {user.email}
@@ -390,7 +390,7 @@ export default function Users() {
                             )}
                           </div>
                           
-                          <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                          <div className="mt-2 text-xs text-gray-500">
                             Joined: {getValidDate(user.createdAt).toLocaleDateString('en-US', {
                               year: 'numeric',
                               month: 'short',
@@ -436,7 +436,7 @@ export default function Users() {
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => handleDeleteUser(user.id, user.name)}
-                              className="text-red-600 dark:text-red-400"
+                              className="text-red-600"
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
                               Delete User
@@ -463,7 +463,7 @@ export default function Users() {
                 <div className="flex items-center space-x-4">
                   <Avatar className="h-20 w-20">
                     <AvatarImage src={selectedUser.profilePhoto || ""} alt={selectedUser.name} />
-                    <AvatarFallback className="text-2xl">
+                    <AvatarFallback className="text-2xl bg-blue-600 text-white">
                       {selectedUser.name.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -483,24 +483,24 @@ export default function Users() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-3">
                     <div>
-                      <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Email</label>
+                      <label className="text-sm font-medium text-gray-600">Email</label>
                       <p className="text-sm">{selectedUser.email}</p>
                     </div>
                     {selectedUser.phone && (
                       <div>
-                        <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Phone</label>
+                        <label className="text-sm font-medium text-gray-600">Phone</label>
                         <p className="text-sm">{selectedUser.phone}</p>
                       </div>
                     )}
                     <div>
-                      <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Role</label>
+                      <label className="text-sm font-medium text-gray-600">Role</label>
                       <p className="text-sm capitalize">{selectedUser.role.replace('_', ' ')}</p>
                     </div>
                   </div>
                   
                   <div className="space-y-3">
                     <div>
-                      <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Joined</label>
+                      <label className="text-sm font-medium text-gray-600">Joined</label>
                       <p className="text-sm">
                         {getValidDate(selectedUser.createdAt).toLocaleDateString('en-US', {
                           year: 'numeric',
@@ -510,11 +510,11 @@ export default function Users() {
                       </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-600 dark:text-gray-400">Status</label>
+                      <label className="text-sm font-medium text-gray-600">Status</label>
                       <p className="text-sm">{selectedUser.isActive ? "Active User" : "Inactive User"}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-600 dark:text-gray-400">User ID</label>
+                      <label className="text-sm font-medium text-gray-600">User ID</label>
                       <p className="text-xs font-mono">{selectedUser.id}</p>
                     </div>
                   </div>

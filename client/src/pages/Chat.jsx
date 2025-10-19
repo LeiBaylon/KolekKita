@@ -86,8 +86,8 @@ export default function Chat() {
     <Layout title="Real-time Chat">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-12rem)] animate-in fade-in duration-300">
         {/* Chat List */}
-        <Card className="border-gray-100 dark:border-gray-800">
-          <CardHeader className="border-b border-gray-200 dark:border-gray-700">
+        <Card className="border-gray-100 ">
+          <CardHeader className="border-b border-gray-200 ">
             <CardTitle className="flex items-center">
               <Users className="h-5 w-5 mr-2" />
               Active Chats
@@ -108,23 +108,23 @@ export default function Chat() {
             )}
 
             {!error && chatList.length > 0 && (
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              <div className="divide-y divide-gray-200 ">
                 {chatList.map((chat) => (
                   <div
                     key={chat.id}
                     className={cn(
-                      "p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors",
-                      selectedChat === chat.id && "bg-blue-50 dark:bg-blue-950 border-r-2 border-primary"
+                      "p-4 cursor-pointer hover:bg-gray-50  transition-colors",
+                      selectedChat === chat.id && "bg-blue-50  border-r-2 border-primary"
                     )}
                     onClick={() => setSelectedChat(chat.id)}
                     data-testid={`chat-item-${chat.id}`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
-                        <h4 className="font-medium text-gray-900 dark:text-gray-100">
+                        <h4 className="font-medium text-gray-900 ">
                           {chat.id === "general" ? "General Chat" : `Booking #${chat.id.slice(0, 8)}`}
                         </h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 truncate mt-1">
+                        <p className="text-sm text-gray-600  truncate mt-1">
                           {chat.lastMessage?.message || "No messages"}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
@@ -145,8 +145,8 @@ export default function Chat() {
         </Card>
 
         {/* Chat Messages */}
-        <Card className="lg:col-span-2 border-gray-100 dark:border-gray-800 flex flex-col">
-          <CardHeader className="border-b border-gray-200 dark:border-gray-700">
+        <Card className="lg:col-span-2 border-gray-100  flex flex-col">
+          <CardHeader className="border-b border-gray-200 ">
             <CardTitle>
               {selectedChat 
                 ? selectedChat === "general" 
@@ -189,7 +189,7 @@ export default function Chat() {
                         >
                           {!isCurrentUser && (
                             <Avatar className="h-8 w-8">
-                              <AvatarFallback>
+                              <AvatarFallback className="bg-gray-600 text-white">
                                 {msg.senderId?.slice(0, 2).toUpperCase() || "U"}
                               </AvatarFallback>
                             </Avatar>
@@ -198,13 +198,13 @@ export default function Chat() {
                           <div className={`rounded-lg p-3 max-w-xs lg:max-w-md ${
                             isCurrentUser 
                               ? 'bg-primary text-white' 
-                              : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                              : 'bg-gray-100  text-gray-900 '
                           }`}>
                             <p className="text-sm" data-testid={`text-message-content-${msg.id}`}>
                               {msg.message}
                             </p>
                             <p className={`text-xs mt-1 ${
-                              isCurrentUser ? 'text-blue-200' : 'text-gray-500 dark:text-gray-400'
+                              isCurrentUser ? 'text-blue-200' : 'text-gray-500 '
                             }`} data-testid={`text-message-time-${msg.id}`}>
                               {messageTime}
                             </p>
@@ -213,7 +213,7 @@ export default function Chat() {
                           {isCurrentUser && (
                             <Avatar className="h-8 w-8">
                               <AvatarImage src={user?.profilePhoto || undefined} />
-                              <AvatarFallback>
+                              <AvatarFallback className="bg-blue-600 text-white">
                                 {user?.name?.charAt(0)?.toUpperCase() || "U"}
                               </AvatarFallback>
                             </Avatar>
@@ -226,7 +226,7 @@ export default function Chat() {
               </CardContent>
 
               {/* Message Input */}
-              <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="p-4 border-t border-gray-200 ">
                 <div className="flex space-x-2">
                   <Input
                     type="text"

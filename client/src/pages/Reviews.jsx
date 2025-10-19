@@ -46,10 +46,10 @@ export default function Reviews() {
   }, {});
 
   const getRatingColor = (rating) => {
-    if (rating >= 4.5) return "text-green-600 dark:text-green-400";
-    if (rating >= 3.5) return "text-yellow-600 dark:text-yellow-400";
-    if (rating >= 2.5) return "text-orange-600 dark:text-orange-400";
-    return "text-red-600 dark:text-red-400";
+    if (rating >= 4.5) return "text-green-600 ";
+    if (rating >= 3.5) return "text-yellow-600 ";
+    if (rating >= 2.5) return "text-orange-600 ";
+    return "text-red-600 ";
   };
 
   if (loading) {
@@ -68,10 +68,10 @@ export default function Reviews() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900 ">
               Ratings & Reviews
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-gray-600 ">
               Monitor customer feedback and service quality
             </p>
           </div>
@@ -85,12 +85,12 @@ export default function Reviews() {
 
         {/* Statistics Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="border-gray-100 dark:border-gray-800">
+          <Card className="border-gray-100 ">
             <CardContent className="p-6">
               <div className="flex items-center">
                 <Star className="h-8 w-8 text-yellow-500" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Average Rating</p>
+                  <p className="text-sm font-medium text-gray-600 ">Average Rating</p>
                   <p className={`text-2xl font-bold ${getRatingColor(averageRating)}`}>
                     {averageRating.toFixed(1)}/5
                   </p>
@@ -99,13 +99,13 @@ export default function Reviews() {
             </CardContent>
           </Card>
 
-          <Card className="border-gray-100 dark:border-gray-800">
+          <Card className="border-gray-100 ">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <MessageSquare className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                <MessageSquare className="h-8 w-8 text-blue-600 " />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Reviews</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <p className="text-sm font-medium text-gray-600 ">Total Reviews</p>
+                  <p className="text-2xl font-bold text-gray-900 ">
                     {reviews.length}
                   </p>
                 </div>
@@ -113,13 +113,13 @@ export default function Reviews() {
             </CardContent>
           </Card>
 
-          <Card className="border-gray-100 dark:border-gray-800">
+          <Card className="border-gray-100 ">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <ThumbsUp className="h-8 w-8 text-green-600 dark:text-green-400" />
+                <ThumbsUp className="h-8 w-8 text-green-600 " />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Positive Reviews</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <p className="text-sm font-medium text-gray-600 ">Positive Reviews</p>
+                  <p className="text-2xl font-bold text-gray-900 ">
                     {reviews.filter(r => r.rating >= 4).length}
                   </p>
                 </div>
@@ -127,13 +127,13 @@ export default function Reviews() {
             </CardContent>
           </Card>
 
-          <Card className="border-gray-100 dark:border-gray-800">
+          <Card className="border-gray-100 ">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <TrendingUp className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+                <TrendingUp className="h-8 w-8 text-purple-600 " />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Satisfaction Rate</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <p className="text-sm font-medium text-gray-600 ">Satisfaction Rate</p>
+                  <p className="text-2xl font-bold text-gray-900 ">
                     {reviews.length > 0 ? Math.round((reviews.filter(r => r.rating >= 4).length / reviews.length) * 100) : 0}%
                   </p>
                 </div>
@@ -143,7 +143,7 @@ export default function Reviews() {
         </div>
 
         {/* Rating Distribution */}
-        <Card className="border-gray-100 dark:border-gray-800">
+        <Card className="border-gray-100 ">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Star className="h-5 w-5 mr-2" />
@@ -162,13 +162,13 @@ export default function Reviews() {
                       <span className="text-sm font-medium">{rating}</span>
                       <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
                     </div>
-                    <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                    <div className="flex-1 bg-gray-200  rounded-full h-3">
                       <div 
                         className="bg-yellow-400 h-3 rounded-full transition-all duration-300"
                         style={{ width: `${percentage}%` }}
                       />
                     </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400 w-16 text-right">
+                    <div className="text-sm text-gray-600  w-16 text-right">
                       {count} ({percentage.toFixed(1)}%)
                     </div>
                   </div>
@@ -179,7 +179,7 @@ export default function Reviews() {
         </Card>
 
         {/* Filters */}
-        <Card className="border-gray-100 dark:border-gray-800">
+        <Card className="border-gray-100 ">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Filter className="h-5 w-5 mr-2" />
@@ -220,20 +220,20 @@ export default function Reviews() {
         </Card>
 
         {/* Reviews List */}
-        <Card className="border-gray-100 dark:border-gray-800">
+        <Card className="border-gray-100 ">
           <CardContent className="p-0">
             {filteredReviews.length === 0 ? (
-              <div className="text-center py-12 text-gray-500 dark:text-gray-400" data-testid="text-no-reviews">
+              <div className="text-center py-12 text-gray-500 " data-testid="text-no-reviews">
                 <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No reviews found</p>
                 <p className="text-sm mt-2">Try adjusting your search criteria</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              <div className="divide-y divide-gray-200 ">
                 {filteredReviews.map((review) => (
                   <div 
                     key={review.id}
-                    className="p-6 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="p-6 hover:bg-gray-50  transition-colors"
                     data-testid={`review-item-${review.id}`}
                   >
                     <div className="space-y-3">
@@ -246,18 +246,18 @@ export default function Reviews() {
                             {review.rating}/5
                           </Badge>
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                        <div className="text-xs text-gray-500 ">
                           {review.createdAt ? new Date(review.createdAt).toLocaleDateString() : 'N/A'}
                         </div>
                       </div>
                       
                       {review.comment && (
-                        <blockquote className="text-gray-700 dark:text-gray-300 italic border-l-4 border-gray-200 dark:border-gray-700 pl-4">
+                        <blockquote className="text-gray-700  italic border-l-4 border-gray-200  pl-4">
                           "{review.comment}"
                         </blockquote>
                       )}
                       
-                      <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center justify-between text-xs text-gray-500 ">
                         <div className="space-x-4">
                           <span>Booking: #{review.bookingId?.slice(0, 8) || 'N/A'}</span>
                           <span>Reviewer: {review.reviewerId?.slice(0, 8) || 'Anonymous'}</span>

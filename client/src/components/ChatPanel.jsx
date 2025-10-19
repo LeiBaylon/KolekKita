@@ -58,9 +58,9 @@ export const ChatPanel = () => {
 
   if (loading) {
     return (
-      <Card className="border-gray-100 dark:border-gray-800">
-        <CardHeader className="border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Real-time Support</h3>
+      <Card className="border-gray-100 ">
+        <CardHeader className="border-b border-gray-200 ">
+          <h3 className="text-lg font-semibold text-gray-900 ">Real-time Support</h3>
         </CardHeader>
         <CardContent className="p-6">
           <LoadingSpinner className="h-80" />
@@ -70,9 +70,9 @@ export const ChatPanel = () => {
   }
 
   return (
-    <Card className="border-gray-100 dark:border-gray-800" data-testid="card-chat-panel">
-      <CardHeader className="border-b border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Real-time Support</h3>
+    <Card className="border-gray-100 " data-testid="card-chat-panel">
+      <CardHeader className="border-b border-gray-200 ">
+        <h3 className="text-lg font-semibold text-gray-900 ">Real-time Support</h3>
       </CardHeader>
       <div className="h-80 flex flex-col">
         {/* Chat Messages */}
@@ -84,7 +84,7 @@ export const ChatPanel = () => {
           )}
           
           {!error && messages.length === 0 && (
-            <div className="text-center text-gray-500 dark:text-gray-400 py-8" data-testid="text-no-messages">
+            <div className="text-center text-gray-500  py-8" data-testid="text-no-messages">
               No messages yet. Start a conversation!
             </div>
           )}
@@ -106,14 +106,14 @@ export const ChatPanel = () => {
               >
                 {!isCurrentUser && (
                   <Avatar className="h-8 w-8">
-                    <AvatarFallback>U</AvatarFallback>
+                    <AvatarFallback className="bg-gray-600 text-white">U</AvatarFallback>
                   </Avatar>
                 )}
                 
                 <div className={`rounded-lg p-3 max-w-xs ${
                   isCurrentUser 
                     ? 'bg-primary text-white' 
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                    : 'bg-gray-100  text-gray-900 '
                 }`}>
                   <p className="text-sm" data-testid={`text-message-content-${msg.id}`}>
                     {msg.message}
@@ -128,7 +128,7 @@ export const ChatPanel = () => {
                 {isCurrentUser && (
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={user?.profilePhoto || undefined} />
-                    <AvatarFallback>
+                    <AvatarFallback className="bg-blue-600 text-white">
                       {user?.name?.charAt(0)?.toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>

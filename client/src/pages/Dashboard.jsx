@@ -177,12 +177,12 @@ export default function Dashboard() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200">
+          <Card className="bg-white border border-gray-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Total Users</p>
-                  <p className="text-3xl font-bold text-green-900 dark:text-green-100">{adminStats.totalUsers}</p>
+                  <p className="text-sm font-medium text-green-600">Total Users</p>
+                  <p className="text-3xl font-bold text-green-900">{adminStats.totalUsers}</p>
                   <p className="text-xs text-green-600">All platform users</p>
                 </div>
                 <div className="w-12 h-12 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
@@ -192,12 +192,12 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200">
+          <Card className="bg-white border border-gray-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Junk Shops</p>
-                  <p className="text-3xl font-bold text-green-900 dark:text-green-100">{adminStats.junkShops}</p>
+                  <p className="text-sm font-medium text-green-600">Junk Shops</p>
+                  <p className="text-3xl font-bold text-green-900">{adminStats.junkShops}</p>
                   <p className="text-xs text-green-600">Business partners</p>
                 </div>
                 <div className="w-12 h-12 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
@@ -207,12 +207,12 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200">
+          <Card className="bg-white border border-gray-200">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Collectors</p>
-                  <p className="text-3xl font-bold text-green-900 dark:text-green-100">{adminStats.collectors}</p>
+                  <p className="text-sm font-medium text-green-600">Collectors</p>
+                  <p className="text-3xl font-bold text-green-900">{adminStats.collectors}</p>
                   <p className="text-xs text-green-600">Active collectors</p>
                 </div>
                 <div className="w-12 h-12 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
@@ -235,7 +235,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>Recent Platform Activity</CardTitle>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-600">
                   Live updates from across the platform
                 </p>
               </div>
@@ -267,13 +267,13 @@ export default function Dashboard() {
                 {recentActivity.map((activity, index) => {
                   const Icon = activity.icon;
                   return (
-                    <div key={index} className="flex items-center space-x-3 p-3 bg-muted rounded-lg">
+                    <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                       <div className={`w-8 h-8 ${activity.color} rounded-full flex items-center justify-center`}>
                         <Icon className="h-4 w-4 text-white" />
                       </div>
                       <div className="flex-1">
                         <p className="font-medium">{activity.message}</p>
-                        <p className="text-muted-foreground text-sm">
+                        <p className="text-gray-600 text-sm">
                           {activity.details} • {activity.timestamp.toLocaleString('en-US', {
                             year: 'numeric',
                             month: 'short',
@@ -289,14 +289,14 @@ export default function Dashboard() {
                 })}
                 {!showMoreActivities && (
                   <div className="text-center pt-2">
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-gray-600">
                       Showing {recentActivity.length} of recent activities
                     </p>
                   </div>
                 )}
               </>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-8 text-gray-600">
                 <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No recent activity</p>
                 <p className="text-sm">Platform activity will appear here</p>

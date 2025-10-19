@@ -82,10 +82,10 @@ export default function Transactions() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900 ">
               Transaction History
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-gray-600 ">
               View and manage completed bookings and revenue
             </p>
           </div>
@@ -97,13 +97,13 @@ export default function Transactions() {
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="border-gray-100 dark:border-gray-800">
+          <Card className="border-gray-100 ">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <DollarSign className="h-8 w-8 text-green-600 dark:text-green-400" />
+                <DollarSign className="h-8 w-8 text-green-600 " />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Revenue</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <p className="text-sm font-medium text-gray-600 ">Total Revenue</p>
+                  <p className="text-2xl font-bold text-gray-900 ">
                     ${totalRevenue.toFixed(2)}
                   </p>
                 </div>
@@ -111,13 +111,13 @@ export default function Transactions() {
             </CardContent>
           </Card>
 
-          <Card className="border-gray-100 dark:border-gray-800">
+          <Card className="border-gray-100 ">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <History className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                <History className="h-8 w-8 text-blue-600 " />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Transactions</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <p className="text-sm font-medium text-gray-600 ">Total Transactions</p>
+                  <p className="text-2xl font-bold text-gray-900 ">
                     {filteredTransactions.length}
                   </p>
                 </div>
@@ -125,13 +125,13 @@ export default function Transactions() {
             </CardContent>
           </Card>
 
-          <Card className="border-gray-100 dark:border-gray-800">
+          <Card className="border-gray-100 ">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <CreditCard className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+                <CreditCard className="h-8 w-8 text-purple-600 " />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Average Transaction</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <p className="text-sm font-medium text-gray-600 ">Average Transaction</p>
+                  <p className="text-2xl font-bold text-gray-900 ">
                     ${averageTransaction.toFixed(2)}
                   </p>
                 </div>
@@ -139,13 +139,13 @@ export default function Transactions() {
             </CardContent>
           </Card>
 
-          <Card className="border-gray-100 dark:border-gray-800">
+          <Card className="border-gray-100 ">
             <CardContent className="p-6">
               <div className="flex items-center">
-                <Calendar className="h-8 w-8 text-orange-600 dark:text-orange-400" />
+                <Calendar className="h-8 w-8 text-orange-600 " />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Today's Revenue</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  <p className="text-sm font-medium text-gray-600 ">Today's Revenue</p>
+                  <p className="text-2xl font-bold text-gray-900 ">
                     ${todayRevenue.toFixed(2)}
                   </p>
                 </div>
@@ -155,7 +155,7 @@ export default function Transactions() {
         </div>
 
         {/* Filters */}
-        <Card className="border-gray-100 dark:border-gray-800">
+        <Card className="border-gray-100 ">
           <CardHeader>
             <CardTitle className="flex items-center">
               <History className="h-5 w-5 mr-2" />
@@ -194,26 +194,26 @@ export default function Transactions() {
         </Card>
 
         {/* Transactions List */}
-        <Card className="border-gray-100 dark:border-gray-800">
+        <Card className="border-gray-100 ">
           <CardContent className="p-0">
             {filteredTransactions.length === 0 ? (
-              <div className="text-center py-12 text-gray-500 dark:text-gray-400" data-testid="text-no-transactions">
+              <div className="text-center py-12 text-gray-500 " data-testid="text-no-transactions">
                 <History className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No transactions found</p>
                 <p className="text-sm mt-2">Try adjusting your search criteria</p>
               </div>
             ) : (
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              <div className="divide-y divide-gray-200 ">
                 {filteredTransactions.map((transaction) => (
                   <div 
                     key={transaction.id}
-                    className="p-6 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="p-6 hover:bg-gray-50  transition-colors"
                     data-testid={`transaction-item-${transaction.id}`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                          <h3 className="font-semibold text-gray-900 ">
                             Booking #{transaction.id.slice(0, 8)}
                           </h3>
                           <Badge variant="default" className="text-xs">
@@ -221,7 +221,7 @@ export default function Transactions() {
                           </Badge>
                         </div>
                         
-                        <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
+                        <div className="space-y-1 text-sm text-gray-600 ">
                           <div className="flex items-center">
                             <span className="font-medium mr-2">Route:</span>
                             {transaction.pickupLocation} → {transaction.dropoffLocation}
@@ -241,10 +241,10 @@ export default function Transactions() {
                       </div>
 
                       <div className="text-right">
-                        <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        <div className="text-2xl font-bold text-green-600 ">
                           ${parseFloat(transaction.price?.toString() || "0").toFixed(2)}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <div className="text-xs text-gray-500  mt-1">
                           Revenue
                         </div>
                       </div>

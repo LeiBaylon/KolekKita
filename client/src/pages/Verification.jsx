@@ -2,27 +2,33 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useFirestoreCollection, useFirestoreOperations } from "@/hooks/useFirestore";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { orderBy } from "firebase/firestore";
 import VerificationService, { useVerifications } from "@/services/verificationService";
+import NotificationService from "@/services/notificationService";
 import { VerificationStatuses, DocumentTypes } from "@shared/schema";
-import { CheckCircle, XCircle, Clock, ShieldCheck, Phone, Mail, Calendar, Building2, MapPin, FileText, Filter, Download } from "lucide-react";
-import DatabaseConnectionTest from "@/components/DatabaseConnectionTest";
+import { CheckCircle, XCircle, Clock, ShieldCheck, Phone, Mail, Calendar, Building2, MapPin, FileText, Filter, Download, Search } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { initializeFirebaseData } from "@/lib/initializeData";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { setUserAsAdmin } from "@/utils/setAdminRole";
+
+
+
+
 
 export default function Verification() {
   const [selectedVerification, setSelectedVerification] = useState(null);
   const [verificationNotes, setVerificationNotes] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
+  const [isDenyDialogOpen, setIsDenyDialogOpen] = useState(false);
+  const [denialReason, setDenialReason] = useState("");
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -58,61 +64,11 @@ export default function Verification() {
   // Fetch verifications with proper ordering using enhanced hook
   const { data: allVerifications = [], loading, error } = useFirestoreCollection("verifications", [orderBy("createdAt", "desc")]);
   
-  // Additional verification stats from service
-  const [verificationStats, setVerificationStats] = useState({
-    pending: 0,
-    approved: 0,
-    rejected: 0,
-    underReview: 0,
-    total: 0,
-    approvalRate: 0
-  });
-
-  // Load verification statistics
-  useEffect(() => {
-    const loadStats = async () => {
-      try {
-        const stats = await VerificationService.getVerificationStats();
-        setVerificationStats(stats);
-      } catch (error) {
-        console.error("Error loading verification stats:", error);
-      }
-    };
-    
-    if (allVerifications.length > 0) {
-      loadStats();
-    }
-  }, [allVerifications]);
 
   // Filter verifications by status and role - properly sync with database
-  // Temporarily show all verifications for debugging
   const junkshopVerifications = allVerifications;
   
-  // Debug: Log the data structure and test direct database access
-  useEffect(() => {
-    if (allVerifications.length > 0) {
-      console.log('🔍 All verifications:', allVerifications);
-      console.log('📊 Sample verification:', allVerifications[0]);
-      console.log('🔑 Available keys:', Object.keys(allVerifications[0] || {}));
-    }
-    
-    // Direct database test
-    const testDirectAccess = async () => {
-      try {
-        console.log('🧪 Testing direct database access...');
-        const verificationsRef = collection(db, 'verifications');
-        const snapshot = await getDocs(verificationsRef);
-        console.log('✅ Direct access successful, found:', snapshot.size, 'documents');
-        snapshot.docs.forEach((doc, index) => {
-          console.log(`📄 Document ${index + 1}:`, { id: doc.id, ...doc.data() });
-        });
-      } catch (error) {
-        console.error('❌ Direct access failed:', error);
-      }
-    };
-    
-    testDirectAccess();
-  }, [allVerifications]);
+
   
   const pendingJunkshops = junkshopVerifications.filter(item => item.status === 'pending' || !item.status);
   const approvedJunkshops = junkshopVerifications.filter(item => item.status === 'approved');
@@ -131,25 +87,43 @@ export default function Verification() {
 
       // Add rejection reason if rejecting
       if (status === VerificationStatuses.REJECTED) {
-        options.rejectionReason = verificationNotes || 'Rejected by admin';
+        options.rejectionReason = denialReason || verificationNotes || 'Rejected by admin';
       }
 
       // Update using the verification service
       await VerificationService.updateVerificationStatus(
         verification.id, 
         status, 
-        'admin', // In a real app, this would be the current admin's ID
+        user?.uid || 'admin', // Use actual admin UID
         options
       );
       
-      console.log(`Successfully ${status} verification ${verification.id}`);
+      // Send notification based on status
+      if (status === VerificationStatuses.APPROVED) {
+        await NotificationService.sendVerificationApprovedNotification(
+          verification.userId,
+          verification.id,
+          verification.shopName || null
+        );
+      } else if (status === VerificationStatuses.REJECTED) {
+        await NotificationService.sendVerificationDeniedNotification(
+          verification.userId,
+          verification.id,
+          options.rejectionReason,
+          verification.shopName || null
+        );
+      }
+      
       setSelectedVerification(null);
       setVerificationNotes("");
+      setDenialReason("");
+      setIsApproveDialogOpen(false);
+      setIsDenyDialogOpen(false);
       
       // Show success toast
       toast({
-        title: "Verification Updated",
-        description: `Verification successfully ${status}!`,
+        title: "✅ Verification Updated",
+        description: `Verification successfully ${status === VerificationStatuses.APPROVED ? 'approved' : 'rejected'}! User has been notified.`,
         variant: status === VerificationStatuses.APPROVED ? "default" : "destructive",
       });
     } catch (error) {
@@ -239,35 +213,46 @@ export default function Verification() {
     }
   };
 
-  // Get filtered verifications based on status filter
+  // Get filtered verifications based on status filter and search term
   const getFilteredVerifications = () => {
+    let baseVerifications;
     switch (statusFilter) {
       case 'pending':
-        return pendingJunkshops;
+        baseVerifications = pendingJunkshops;
+        break;
       case 'approved':
-        return approvedJunkshops;
+        baseVerifications = approvedJunkshops;
+        break;
       case 'rejected':
-        return rejectedJunkshops;
+        baseVerifications = rejectedJunkshops;
+        break;
       case 'all':
       default:
-        return junkshopVerifications;
+        baseVerifications = junkshopVerifications;
+        break;
     }
+
+    // Apply search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      return baseVerifications.filter(verification => 
+        verification.shopName?.toLowerCase().includes(searchLower) ||
+        verification.businessLicense?.toLowerCase().includes(searchLower) ||
+        verification.address?.toLowerCase().includes(searchLower) ||
+        verification.phoneNumber?.toLowerCase().includes(searchLower) ||
+        verification.userRole?.toLowerCase().includes(searchLower) ||
+        verification.documentType?.toLowerCase().includes(searchLower) ||
+        verification.userId?.toLowerCase().includes(searchLower) ||
+        verification.rejectionReason?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    return baseVerifications;
   };
 
   const filteredVerifications = getFilteredVerifications();
 
-  // Debug information
-  console.log('🔍 Debug Verification Data:');
-  console.log('📊 allVerifications.length:', allVerifications.length);
-  console.log('📊 allVerifications:', allVerifications);
-  console.log('🏪 junkshopVerifications.length:', junkshopVerifications.length);
-  console.log('📋 filteredVerifications.length:', filteredVerifications.length);
-  console.log('🎯 statusFilter:', statusFilter);
-  console.log('⏳ loading:', loading);
-  console.log('❌ error:', error);
-  console.log('👤 user:', user);
-  console.log('🔑 user.id:', user?.id);
-  console.log('👨‍💼 user.role:', user?.role);
+
 
   return (
     <Layout title="Junk Shop Verification">
@@ -310,210 +295,72 @@ export default function Verification() {
           </CardContent>
         </Card>
 
-        {/* Database Connection Test */}
-        <DatabaseConnectionTest />
-
-        {/* Database Connection Status */}
-        <Card className={`mb-6 ${
-          loading ? 'border-yellow-200 bg-yellow-50' : 
-          error ? 'border-red-200 bg-red-50' : 
-          allVerifications.length === 0 ? 'border-orange-200 bg-orange-50' : 
-          'border-green-200 bg-green-50'
-        }`}>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className={`w-4 h-4 rounded-full ${
-                  loading ? 'bg-yellow-500' : 
-                  error ? 'bg-red-500' : 
-                  allVerifications.length === 0 ? 'bg-orange-500' : 
-                  'bg-green-500'
-                } animate-pulse`}></div>
-                <div>
-                  <div className="font-medium text-sm">
-                    {loading ? 'Connecting to Database...' : 
-                     error ? 'Database Connection Error' : 
-                     allVerifications.length === 0 ? 'No Data Found' : 
-                     'Database Connected'}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {loading ? 'Loading verification data from Firestore' :
-                     error ? `Error: ${error}` :
-                     `Found ${allVerifications.length} verifications (${junkshopVerifications.length} junk shops)`}
-                  </div>
-                </div>
+        {/* Search and Filters */}
+        <Card className="bg-white border border-gray-200">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <ShieldCheck className="h-5 w-5 mr-2" />
+              Verification Directory
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <Input
+                  placeholder="Search by shop name, license, address, phone, user ID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full"
+                />
               </div>
-              
-              {/* Quick Actions */}
-              <div className="flex items-center space-x-2">
-                {!loading && allVerifications.length === 0 && !error && (
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={async () => {
-                      try {
-                        const currentUserId = user?.id || "admin-user-" + Date.now();
-                        
-                        await initializeFirebaseData(currentUserId);
-                        
-                        toast({
-                          title: "Success!",
-                          description: "Sample verification data has been created successfully. The page will refresh automatically.",
-                        });
-                        
-                        // Refresh page after 2 seconds to show new data
-                        setTimeout(() => {
-                          window.location.reload();
-                        }, 2000);
-                        
-                      } catch (error) {
-                        console.error("Failed to initialize data:", error);
-                        toast({
-                          title: "Error",
-                          description: `Failed to initialize sample data: ${error.message}`,
-                          variant: "destructive",
-                        });
-                      }
-                    }}
-                  >
-                    Initialize Sample Data
-                  </Button>
-                )}
-                
-                {/* Set Admin Role Button */}
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  className="ml-2"
-                  onClick={async () => {
-                    try {
-                      if (!user?.id) {
-                        toast({
-                          title: "Error",
-                          description: "No user logged in",
-                          variant: "destructive",
-                        });
-                        return;
-                      }
-                      
-                      const success = await setUserAsAdmin(user.id);
-                      
-                      if (success) {
-                        toast({
-                          title: "Success!",
-                          description: "Admin role set successfully. Please refresh the page.",
-                        });
-                        
-                        // Refresh page after 2 seconds
-                        setTimeout(() => {
-                          window.location.reload();
-                        }, 2000);
-                      }
-                    } catch (error) {
-                      console.error("Failed to set admin role:", error);
-                      toast({
-                        title: "Error",
-                        description: `Failed to set admin role: ${error.message}`,
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                >
-                  Set Admin Role
-                </Button>
-                
-                <Badge variant="outline" className="text-xs">
-                  Firebase Firestore
-                </Badge>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-[200px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Verifications</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Verification Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
+              <div className="text-center p-4 bg-white rounded-lg border-green-200 border">
+                <div className="text-2xl font-bold text-green-600">
+                  {allVerifications.length}
+                </div>
+                <div className="text-sm text-green-600">Total</div>
+              </div>
+              <div className="text-center p-4 bg-white rounded-lg border-yellow-200 border">
+                <div className="text-2xl font-bold text-yellow-600">
+                  {pendingJunkshops.length}
+                </div>
+                <div className="text-sm text-yellow-600">Pending</div>
+              </div>
+              <div className="text-center p-4 bg-white rounded-lg border-green-200 border">
+                <div className="text-2xl font-bold text-green-600">
+                  {approvedJunkshops.length}
+                </div>
+                <div className="text-sm text-green-600">Approved</div>
+              </div>
+              <div className="text-center p-4 bg-white rounded-lg border-red-200 border">
+                <div className="text-2xl font-bold text-red-600">
+                  {rejectedJunkshops.length}
+                </div>
+                <div className="text-sm text-red-600">Rejected</div>
               </div>
             </div>
-            
-            {/* Additional Debug Info */}
-            {(!loading && allVerifications.length === 0 && !error) && (
-              <div className="mt-3 p-3 bg-white rounded border text-xs">
-                <div className="font-medium mb-2">Troubleshooting:</div>
-                <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                  <li>Ensure Firebase configuration is correct</li>
-                  <li>Check Firestore security rules allow read access</li>
-                  <li>Initialize sample data using the admin panel</li>
-                  <li>Verify the "verifications" collection exists</li>
-                </ul>
-              </div>
-            )}
-            
-            {/* Show sample data structure if available */}
-            {allVerifications.length > 0 && (
-              <details className="mt-3">
-                <summary className="text-xs font-medium cursor-pointer">View Sample Data Structure</summary>
-                <pre className="text-xs bg-white p-2 mt-2 rounded border overflow-auto max-h-32">
-                  {JSON.stringify(allVerifications[0], null, 2)}
-                </pre>
-              </details>
-            )}
           </CardContent>
         </Card>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Pending</p>
-                  <p className="text-3xl font-bold text-green-900 dark:text-green-100">{verificationStats.pending}</p>
-                </div>
-                <div className="w-12 h-12 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
-                  <Clock className="h-6 w-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Approved</p>
-                  <p className="text-3xl font-bold text-green-900 dark:text-green-100">{verificationStats.approved}</p>
-                </div>
-                <div className="w-12 h-12 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
-                  <CheckCircle className="h-6 w-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
-          <Card className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950 dark:to-red-900 border-red-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-red-600 dark:text-red-400">Rejected</p>
-                  <p className="text-3xl font-bold text-red-900 dark:text-red-100">{verificationStats.rejected}</p>
-                </div>
-                <div className="w-12 h-12 bg-red-500 bg-opacity-20 rounded-lg flex items-center justify-center">
-                  <XCircle className="h-6 w-6 text-red-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Approval Rate</p>
-                  <p className="text-3xl font-bold text-green-900 dark:text-green-100">{verificationStats.approvalRate}%</p>
-                </div>
-                <div className="w-12 h-12 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
-                  <Badge className="bg-green-600 text-white">{verificationStats.approvalRate}%</Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Verification Results */}
-        <Card className="border bg-card">
+        <Card className="bg-white border border-gray-200">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               {statusFilter === 'pending' && <Clock className="h-5 w-5 text-yellow-600" />}
@@ -537,7 +384,7 @@ export default function Verification() {
                     className={`rounded-lg p-6 ${
                       verification.status === 'approved' ? 'bg-green-50 border border-green-200' :
                       verification.status === 'rejected' ? 'bg-red-50 border border-red-200' :
-                      'bg-muted'
+                      'bg-gray-50'
                     }`}
                   >
                     <div className="flex items-start justify-between">
@@ -557,8 +404,8 @@ export default function Verification() {
                         </div>
                         <div className="flex-1">
                           <h3 className="text-lg font-semibold">Junk Shop Verification</h3>
-                          <p className="text-sm text-muted-foreground">Document: {verification.documentType || 'Unknown Document'}</p>
-                          <div className="flex items-center space-x-4 text-muted-foreground text-sm mt-2">
+                          <p className="text-sm text-gray-600">Document: {verification.documentType || 'Unknown Document'}</p>
+                          <div className="flex items-center space-x-4 text-gray-600 text-sm mt-2">
                             <span className="flex items-center space-x-1">
                               <Building2 className="h-4 w-4" />
                               <span>User ID: {verification.userId}</span>
@@ -572,7 +419,7 @@ export default function Verification() {
                                   : 'Recently'}</span>
                             </span>
                           </div>
-                          <div className="flex items-center space-x-4 text-muted-foreground text-sm mt-1">
+                          <div className="flex items-center space-x-4 text-gray-600 text-sm mt-1">
                             <span className="flex items-center space-x-1">
                               <FileText className="h-4 w-4" />
                               <span>Type: {verification.documentType}</span>
@@ -617,7 +464,10 @@ export default function Verification() {
                             <Button 
                               size="sm" 
                               className="bg-green-600 hover:bg-green-700 text-white"
-                              onClick={() => handleVerification(verification, 'approved')}
+                              onClick={() => {
+                                setSelectedVerification(verification);
+                                setIsApproveDialogOpen(true);
+                              }}
                             >
                               <CheckCircle className="h-4 w-4 mr-1" />
                               Approve
@@ -625,10 +475,13 @@ export default function Verification() {
                             <Button 
                               variant="destructive" 
                               size="sm"
-                              onClick={() => handleVerification(verification, 'rejected')}
+                              onClick={() => {
+                                setSelectedVerification(verification);
+                                setIsDenyDialogOpen(true);
+                              }}
                             >
                               <XCircle className="h-4 w-4 mr-1" />
-                              Reject
+                              Deny
                             </Button>
                           </>
                         )}
@@ -647,34 +500,34 @@ export default function Verification() {
                               <div className="space-y-6">
                                 <div className="grid grid-cols-2 gap-4">
                                   <div>
-                                    <label className="text-sm font-medium text-muted-foreground">Document Type</label>
-                                    <div className="mt-1 p-3 bg-muted rounded-md">
+                                    <label className="text-sm font-medium text-gray-600">Document Type</label>
+                                    <div className="mt-1 p-3 bg-gray-50 rounded-md">
                                       {selectedVerification.documentType || 'Unknown Document'}
                                     </div>
                                   </div>
                                   <div>
-                                    <label className="text-sm font-medium text-muted-foreground">User ID</label>
-                                    <div className="mt-1 p-3 bg-muted rounded-md">
+                                    <label className="text-sm font-medium text-gray-600">User ID</label>
+                                    <div className="mt-1 p-3 bg-gray-50 rounded-md">
                                       {selectedVerification.userId || 'Unknown User'}
                                     </div>
                                   </div>
                                   <div>
-                                    <label className="text-sm font-medium text-muted-foreground">Status</label>
-                                    <div className="mt-1 p-3 bg-muted rounded-md">
+                                    <label className="text-sm font-medium text-gray-600">Status</label>
+                                    <div className="mt-1 p-3 bg-gray-50 rounded-md">
                                       {selectedVerification.status || 'Pending'}
                                     </div>
                                   </div>
                                   <div>
-                                    <label className="text-sm font-medium text-muted-foreground">User Role</label>
-                                    <div className="mt-1 p-3 bg-muted rounded-md">
+                                    <label className="text-sm font-medium text-gray-600">User Role</label>
+                                    <div className="mt-1 p-3 bg-gray-50 rounded-md">
                                       {selectedVerification.userRole || 'Unknown'}
                                     </div>
                                   </div>
                                 </div>
                                 {selectedVerification.documentURL && (
                                   <div>
-                                    <label className="text-sm font-medium text-muted-foreground">Document</label>
-                                    <div className="mt-1 p-3 bg-muted rounded-md">
+                                    <label className="text-sm font-medium text-gray-600">Document</label>
+                                    <div className="mt-1 p-3 bg-gray-50 rounded-md">
                                       <a href={selectedVerification.documentURL} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                                         View Document
                                       </a>
@@ -682,7 +535,7 @@ export default function Verification() {
                                   </div>
                                 )}
                                 <div>
-                                  <label className="text-sm font-medium text-muted-foreground mb-2 block">Verification Notes</label>
+                                  <label className="text-sm font-medium text-gray-600 mb-2 block">Verification Notes</label>
                                   <Textarea
                                     placeholder="Add notes about this verification..."
                                     value={verificationNotes}
@@ -696,7 +549,7 @@ export default function Verification() {
                                       <Button 
                                         className="bg-green-600 hover:bg-green-700 text-white"
                                         onClick={() => {
-                                          handleVerification(selectedVerification, 'approved');
+                                          setIsApproveDialogOpen(true);
                                         }}
                                       >
                                         <CheckCircle className="h-4 w-4 mr-1" />
@@ -705,11 +558,11 @@ export default function Verification() {
                                       <Button 
                                         variant="destructive"
                                         onClick={() => {
-                                          handleVerification(selectedVerification, 'rejected');
+                                          setIsDenyDialogOpen(true);
                                         }}
                                       >
                                         <XCircle className="h-4 w-4 mr-1" />
-                                        Reject
+                                        Deny
                                       </Button>
                                     </>
                                   )}
@@ -723,7 +576,7 @@ export default function Verification() {
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 text-gray-600">
                   <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No {statusFilter === 'all' ? '' : statusFilter} verifications found</p>
                   <p className="text-sm">
@@ -739,6 +592,139 @@ export default function Verification() {
         </Card>
 
       </div>
+
+      {/* Approve Verification Dialog */}
+      <Dialog open={isApproveDialogOpen} onOpenChange={setIsApproveDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>✅ Approve Verification</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to approve this verification? The user will be notified.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedVerification && (
+            <div className="space-y-4 py-4">
+              <div className="p-4 bg-gray-50 rounded-md space-y-2">
+                <p className="font-medium">{selectedVerification.shopName || 'Junk Shop'}</p>
+                <p className="text-sm text-gray-600">User ID: {selectedVerification.userId}</p>
+                <p className="text-sm text-gray-600">
+                  Document: {selectedVerification.documentType?.replace('_', ' ')}
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="approve-notes">Admin Notes (Optional)</Label>
+                <Textarea
+                  id="approve-notes"
+                  placeholder="Add any notes about this approval..."
+                  value={verificationNotes}
+                  onChange={(e) => setVerificationNotes(e.target.value)}
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsApproveDialogOpen(false);
+                setVerificationNotes("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="bg-green-600 hover:bg-green-700"
+              onClick={() => {
+                if (selectedVerification) {
+                  handleVerification(selectedVerification, VerificationStatuses.APPROVED);
+                }
+              }}
+            >
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Approve & Notify User
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Deny Verification Dialog */}
+      <Dialog open={isDenyDialogOpen} onOpenChange={setIsDenyDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>❌ Deny Verification</DialogTitle>
+            <DialogDescription>
+              Please provide a reason for denying this verification. The user will be notified with instructions on how to fix the issues.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedVerification && (
+            <div className="space-y-4 py-4">
+              <div className="p-4 bg-gray-50 rounded-md space-y-2">
+                <p className="font-medium">{selectedVerification.shopName || 'Junk Shop'}</p>
+                <p className="text-sm text-gray-600">User ID: {selectedVerification.userId}</p>
+                <p className="text-sm text-gray-600">
+                  Document: {selectedVerification.documentType?.replace('_', ' ')}
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="denial-reason">Reason for Denial *</Label>
+                <Textarea
+                  id="denial-reason"
+                  placeholder="Please explain why this verification is being denied and what needs to be fixed..."
+                  value={denialReason}
+                  onChange={(e) => setDenialReason(e.target.value)}
+                  rows={4}
+                  required
+                />
+                <p className="text-xs text-gray-600">
+                  This reason will be sent to the user in a notification.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="deny-notes">Additional Admin Notes (Optional)</Label>
+                <Textarea
+                  id="deny-notes"
+                  placeholder="Add any internal notes..."
+                  value={verificationNotes}
+                  onChange={(e) => setVerificationNotes(e.target.value)}
+                  rows={2}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDenyDialogOpen(false);
+                setDenialReason("");
+                setVerificationNotes("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (selectedVerification && denialReason.trim()) {
+                  handleVerification(selectedVerification, VerificationStatuses.REJECTED);
+                } else {
+                  toast({
+                    title: "Missing Information",
+                    description: "Please provide a reason for denial.",
+                    variant: "destructive",
+                  });
+                }
+              }}
+              disabled={!denialReason.trim()}
+            >
+              <XCircle className="w-4 h-4 mr-2" />
+              Deny & Notify User
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </Layout>
   );
 }

@@ -78,8 +78,8 @@ export default function NewBooking() {
   return (
     <Layout title="New Junk Pickup Booking">
       <div className="max-w-2xl mx-auto">
-        <Card className="border-gray-100 dark:border-gray-800">
-          <CardHeader className="border-b border-gray-200 dark:border-gray-700">
+        <Card className="border-gray-100 ">
+          <CardHeader className="border-b border-gray-200 ">
             <CardTitle className="flex items-center">
               <Package className="h-5 w-5 mr-2" />
               Schedule Junk Pickup

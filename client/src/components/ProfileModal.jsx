@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { updateDoc, doc } from "firebase/firestore";
@@ -108,9 +107,9 @@ export const ProfileModal = ({ isOpen, onClose }) => {
 
   const getRoleColor = (role) => {
     switch (role) {
-      case 'admin': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      case 'moderator': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+      case 'admin': return 'bg-red-100 text-red-800  ';
+      case 'moderator': return 'bg-blue-100 text-blue-800  ';
+      default: return 'bg-gray-100 text-gray-800  ';
     }
   };
 
@@ -134,7 +133,7 @@ export const ProfileModal = ({ isOpen, onClose }) => {
                   <div className="relative">
                     <Avatar className="w-16 h-16 border-2 border-white/20">
                       <AvatarImage src={user?.profilePhoto || undefined} />
-                      <AvatarFallback className="bg-white/20 text-white text-lg">
+                      <AvatarFallback className="bg-blue-600 text-white text-lg">
                         {user?.name?.charAt(0)?.toUpperCase() || "A"}
                       </AvatarFallback>
                     </Avatar>
@@ -301,7 +300,7 @@ export const ProfileModal = ({ isOpen, onClose }) => {
                     <span className="text-sm">{formatDate(user?.updatedAt || user?.createdAt)}</span>
                   </div>
 
-                  <Separator className="my-3" />
+                  <div className="h-px bg-gray-200 my-3" />
 
                   <div className="text-center py-4">
                     <p className="text-sm text-muted-foreground">
