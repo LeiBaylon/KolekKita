@@ -7,13 +7,11 @@ Based on code analysis, these collections are **NOT USED** in your KolekKita app
 ### ❌ Safe to Remove:
 1. **`announcements`** - Replaced by `notification_campaigns` with type "announcement"
 2. **`app_config`** - No configuration system implemented in the code
-3. **`chats`** - App uses `chatMessages` collection instead
-4. **`messages`** - App uses `chatMessages` collection instead  
-5. **`waste_bookings`** - App uses `bookings` collection instead
+3. **`waste_bookings`** - App uses `bookings` collection instead
 
 ## Manual Cleanup Steps
 
-### Option A: Firebase Console (Recommended)
+### Option B: Manual Cleanup via Firebase Console
 1. Go to [Firebase Console](https://console.firebase.google.com/)
 2. Select your `kolekkita` project
 3. Navigate to **Firestore Database**
@@ -23,14 +21,7 @@ Based on code analysis, these collections are **NOT USED** in your KolekKita app
    - Click **Delete** button
    - Confirm deletion
 
-### Option B: Using the Cleanup Script
-```bash
-# Check what's in the unused collections (safe)
-node cleanup-unused-collections.js check
-
-# Delete unused collections (destructive - make backup first!)
-node cleanup-unused-collections.js delete
-```
+**Only 3 collections to remove**: `announcements`, `app_config`, `waste_bookings`
 
 ## ✅ Collections to Keep
 
@@ -41,7 +32,8 @@ These collections are actively used by your app:
 - `notification_campaigns` - Mass notifications & announcements
 - `verifications` - Junk shop verification
 - `reports` - User reports and moderation
-- `chatMessages` - Chat system
+- `chats` - Chat conversations/rooms metadata
+- `messages` - Individual chat messages
 
 ## Impact of Cleanup
 
