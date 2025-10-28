@@ -11,7 +11,13 @@ export const initializeFirebaseData = async (currentUserId) => {
       return;
     }
 
-    // Sample Users
+    // Helper function to create dates across different months
+    const createDateMonthsAgo = (monthsAgo, dayOfMonth = 1) => {
+      const now = new Date();
+      return new Date(now.getFullYear(), now.getMonth() - monthsAgo, dayOfMonth);
+    };
+
+    // Sample Users - spread across different months
     const sampleUsers = [
       {
         email: "admin@kolekita.com",
@@ -20,7 +26,7 @@ export const initializeFirebaseData = async (currentUserId) => {
         profilePhoto: null,
         phone: "+62812345678",
         isActive: true,
-        createdAt: new Date(),
+        createdAt: createDateMonthsAgo(6, 5), // 6 months ago
         updatedAt: new Date(),
       },
       {
@@ -30,7 +36,7 @@ export const initializeFirebaseData = async (currentUserId) => {
         profilePhoto: null,
         phone: "+62812345679",
         isActive: true,
-        createdAt: new Date(),
+        createdAt: createDateMonthsAgo(4, 12), // 4 months ago
         updatedAt: new Date(),
       },
       {
@@ -40,7 +46,37 @@ export const initializeFirebaseData = async (currentUserId) => {
         profilePhoto: null,
         phone: "+62812345680",
         isActive: true,
-        createdAt: new Date(),
+        createdAt: createDateMonthsAgo(3, 18), // 3 months ago
+        updatedAt: new Date(),
+      },
+      {
+        email: "resident1@kolekita.com",
+        name: "Sari Resident",
+        role: "resident", 
+        profilePhoto: null,
+        phone: "+62812345681",
+        isActive: true,
+        createdAt: createDateMonthsAgo(2, 8), // 2 months ago
+        updatedAt: new Date(),
+      },
+      {
+        email: "collector2@kolekita.com",
+        name: "Andi Collector",
+        role: "collector", 
+        profilePhoto: null,
+        phone: "+62812345682",
+        isActive: true,
+        createdAt: createDateMonthsAgo(1, 15), // 1 month ago
+        updatedAt: new Date(),
+      },
+      {
+        email: "shop2@kolekita.com",
+        name: "Surabaya Waste Center",
+        role: "junk_shop_owner",
+        profilePhoto: null,
+        phone: "+62812345683",
+        isActive: true,
+        createdAt: createDateMonthsAgo(0, 10), // This month
         updatedAt: new Date(),
       }
     ];
@@ -52,7 +88,7 @@ export const initializeFirebaseData = async (currentUserId) => {
       userIds.push(docRef.id);
     }
 
-    // Sample Bookings
+    // Sample Bookings - spread across different months
     const sampleBookings = [
       {
         customerId: currentUserId,
@@ -67,7 +103,7 @@ export const initializeFirebaseData = async (currentUserId) => {
         dropoffCoords: { latitude: -6.1751, longitude: 106.8650 },
         completedTime: null,
         price: 50000,
-        createdAt: new Date(),
+        createdAt: createDateMonthsAgo(2, 15), // 2 months ago
         updatedAt: new Date(),
       },
       {
@@ -82,8 +118,8 @@ export const initializeFirebaseData = async (currentUserId) => {
         pickupCoords: { latitude: -6.1944, longitude: 106.8229 },
         dropoffCoords: { latitude: -6.1751, longitude: 106.8650 },
         completedTime: null,
-        price: 75000,
-        createdAt: new Date(),
+        price: 30000,
+        createdAt: createDateMonthsAgo(1, 22), // 1 month ago
         updatedAt: new Date(),
       },
       {
@@ -93,13 +129,29 @@ export const initializeFirebaseData = async (currentUserId) => {
         dropoffLocation: "Jakarta Recycling Center",
         scheduledTime: new Date(Date.now() - 24 * 60 * 60 * 1000), // Yesterday
         status: "completed",
-        notes: "Material: Plastic. Estimated weight: 10kg. Plastic bottles and containers",
+        notes: "Material: Mixed metals. Estimated weight: 20kg. Old furniture and appliances",
         photos: [],
         pickupCoords: { latitude: -6.2297, longitude: 106.8253 },
         dropoffCoords: { latitude: -6.1751, longitude: 106.8650 },
         completedTime: new Date(),
-        price: 35000,
-        createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
+        price: 75000,
+        createdAt: createDateMonthsAgo(0, 5), // This month
+        updatedAt: new Date(),
+      },
+      {
+        customerId: currentUserId,
+        collectorId: userIds[4], // Different collector
+        pickupLocation: "Jl. Kuningan No. 321, Jakarta",
+        dropoffLocation: "Surabaya Waste Center",
+        scheduledTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        status: "pending",
+        notes: "Material: Plastic containers. Estimated weight: 10kg",
+        photos: [],
+        pickupCoords: { latitude: -6.2297, longitude: 106.8253 },
+        dropoffCoords: { latitude: -6.1751, longitude: 106.8650 },
+        completedTime: null,
+        price: 25000,
+        createdAt: createDateMonthsAgo(0, 20), // This month
         updatedAt: new Date(),
       }
     ];

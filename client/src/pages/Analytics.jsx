@@ -182,8 +182,9 @@ export default function Analytics() {
         break;
         
       default: // monthly
-        // Last 12 months
+        // Last 12 months - always start from 1st of each month
         for (let i = 11; i >= 0; i--) {
+          // Ensure we always start from the 1st day of each month
           const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
           const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
           
@@ -202,7 +203,9 @@ export default function Analytics() {
           data.push({
             period: date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
             users: monthUsers,
-            bookings: monthBookings
+            bookings: monthBookings,
+            // Add month start date for consistency
+            monthStart: date.toISOString().split('T')[0]
           });
         }
     }
@@ -248,13 +251,16 @@ export default function Analytics() {
     return Object.entries(monthlyData)
       .map(([monthKey, data]) => {
         const [year, month] = monthKey.split('-');
-        const date = new Date(parseInt(year), parseInt(month) - 1);
+        // Always use 1st day of month for consistent display
+        const date = new Date(parseInt(year), parseInt(month) - 1, 1);
         return {
           month: date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
           users: data.total,
           collectors: data.collectors,
           junkShops: data.junkShops,
-          sortKey: monthKey
+          sortKey: monthKey,
+          // Add month start date for consistency
+          monthStart: date.toISOString().split('T')[0]
         };
       })
       .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
