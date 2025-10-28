@@ -201,11 +201,13 @@ export default function Analytics() {
           }).length;
           
           data.push({
-            period: date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+            period: `${date.toLocaleDateString('en-US', { month: 'short' })} 1`,
             users: monthUsers,
             bookings: monthBookings,
             // Add month start date for consistency
-            monthStart: date.toISOString().split('T')[0]
+            monthStart: date.toISOString().split('T')[0],
+            // Add explicit month label starting from 1st
+            monthLabel: `${date.toLocaleDateString('en-US', { month: 'short' })} 1`
           });
         }
     }
@@ -254,7 +256,7 @@ export default function Analytics() {
         // Always use 1st day of month for consistent display
         const date = new Date(parseInt(year), parseInt(month) - 1, 1);
         return {
-          month: date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+          month: `${date.toLocaleDateString('en-US', { month: 'short' })} 1`,
           users: data.total,
           collectors: data.collectors,
           junkShops: data.junkShops,
