@@ -548,7 +548,7 @@ export default function Moderation() {
                     <DropdownMenuItem 
                       onClick={() => {
                         setFilterType('pending');
-                        const pendingCount = reportQueue.filter(r => r.status === 'pending').length;
+                        const pendingCount = reportQueue.filter(r => r.status === 'pending' || !r.status).length;
                         toast({
                           title: "Pending Reports",
                           description: `Showing ${pendingCount} pending reports for ${getTimePeriodDescription()}`
@@ -644,7 +644,7 @@ export default function Moderation() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
               <div className="text-center p-3 bg-white rounded-lg border-green-200 border">
                 <div className="text-lg font-bold text-green-600">
-                  {reportQueue.filter(r => r.status === 'pending').length}
+                  {reportQueue.filter(r => r.status === 'pending' || !r.status).length}
                 </div>
                 <div className="text-xs text-green-600">Pending</div>
               </div>
