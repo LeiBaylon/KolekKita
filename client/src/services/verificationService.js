@@ -80,11 +80,25 @@ export class VerificationService {
         updateData.adminNotes = options.adminNotes;
       }
 
+      console.log('Updating verification document:', {
+        verificationId,
+        collection: this.COLLECTION_NAME,
+        updateData,
+        status
+      });
+
       await updateDoc(verificationRef, updateData);
       
-      console.log(`Verification ${verificationId} status updated to ${status}`);
+      console.log(`✅ Verification ${verificationId} status successfully updated to ${status} in Firebase`);
+      console.log('Full update data applied:', updateData);
     } catch (error) {
-      console.error("Error updating verification status:", error);
+      console.error("❌ Error updating verification status:", error);
+      console.error("Failed verification update details:", {
+        verificationId,
+        status,
+        adminId,
+        options
+      });
       throw error;
     }
   }

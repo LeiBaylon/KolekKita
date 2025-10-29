@@ -64,9 +64,22 @@ export default function Verification() {
   // Fetch verifications with proper ordering using enhanced hook
   const { data: allVerifications = [], loading, error } = useFirestoreCollection("verifications", [orderBy("createdAt", "desc")]);
   
+  // Map mobile app fields to admin web app expected fields
+  const mappedVerifications = allVerifications.map(verification => ({
+    ...verification,
+    // Map submittedBy to userId for consistency with admin interface
+    userId: verification.userId || verification.submittedBy,
+    // Map submissionTimestamp to createdAt if createdAt is missing
+    createdAt: verification.createdAt || verification.submissionTimestamp,
+    // Ensure metadata structure
+    metadata: {
+      submissionTimestamp: verification.submissionTimestamp || verification.metadata?.submissionTimestamp,
+      ...verification.metadata
+    }
+  }));
 
   // Filter verifications by status and role - properly sync with database
-  const junkshopVerifications = allVerifications;
+  const junkshopVerifications = mappedVerifications;
   
 
   
@@ -81,6 +94,14 @@ export default function Verification() {
   // Update verification status function - using enhanced verification service
   const handleVerification = async (verification, status) => {
     try {
+      console.log('🔄 Starting verification status update:', {
+        verificationId: verification.id,
+        currentStatus: verification.status,
+        newStatus: status,
+        userId: verification.userId,
+        documentType: verification.documentType
+      });
+
       const options = {
         adminNotes: verificationNotes || `Verification ${status} by admin`
       };
@@ -100,19 +121,25 @@ export default function Verification() {
       
       // Send notification based on status
       if (status === VerificationStatuses.APPROVED) {
+        console.log('📤 Sending approval notification to user:', verification.userId);
         await NotificationService.sendVerificationApprovedNotification(
           verification.userId,
           verification.id,
           verification.shopName || null
         );
+        console.log('✅ Approval notification sent successfully');
       } else if (status === VerificationStatuses.REJECTED) {
+        console.log('📤 Sending rejection notification to user:', verification.userId);
         await NotificationService.sendVerificationDeniedNotification(
           verification.userId,
           verification.id,
           options.rejectionReason,
           verification.shopName || null
         );
+        console.log('✅ Rejection notification sent successfully');
       }
+      
+      console.log('🎉 Verification process completed successfully!');
       
       setSelectedVerification(null);
       setVerificationNotes("");
