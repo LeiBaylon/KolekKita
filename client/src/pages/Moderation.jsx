@@ -236,7 +236,6 @@ export default function Moderation() {
         'Category', 
         'Description',
         'Reported By',
-        'Priority',
         'Status',
         'Date Reported',
         'Action Taken'
@@ -248,7 +247,6 @@ export default function Moderation() {
         report.category,
         report.description,
         report.reportedBy,
-        report.priority,
         report.status,
         new Date(report.date).toLocaleDateString('en-US'),
         'Pending' // Action status will be updated when actions are taken
@@ -410,9 +408,6 @@ export default function Moderation() {
       case 'resolved':
         baseReports = baseReports.filter(r => r.status === 'resolved');
         break;
-      case 'priority':
-        baseReports = baseReports.filter(r => r.priority === 'High' || r.priority === 'Medium');
-        break;
       default:
         // baseReports already filtered by status above
         break;
@@ -526,8 +521,7 @@ export default function Moderation() {
                       <Filter className="h-4 w-4 mr-2" />
                       {filterType === 'all' ? 'All Reports' : 
                        filterType === 'pending' ? 'View Pending' :
-                       filterType === 'resolved' ? 'View Resolved' :
-                       filterType === 'priority' ? 'View Priority Level' : 'All Reports'}
+                       filterType === 'resolved' ? 'View Resolved' : 'All Reports'}
                       <ChevronDown className="h-4 w-4 ml-2" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -572,20 +566,6 @@ export default function Moderation() {
                     >
                       <CheckCircle className="h-4 w-4 mr-2" />
                       View Resolved
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => {
-                        setFilterType('priority');
-                        const priorityCount = reportQueue.filter(r => r.priority === 'High' || r.priority === 'Medium').length;
-                        toast({
-                          title: "Priority Reports",
-                          description: `Showing ${priorityCount} priority reports for ${getTimePeriodDescription()}`
-                        });
-                      }}
-                      className={filterType === 'priority' ? 'bg-gray-50' : ''}
-                    >
-                      <Flag className="h-4 w-4 mr-2" />
-                      View Priority Level
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -635,13 +615,12 @@ export default function Moderation() {
                   <SelectItem value="all">All Types</SelectItem>
                   <SelectItem value="pending">Pending Only</SelectItem>
                   <SelectItem value="resolved">Resolved Only</SelectItem>
-                  <SelectItem value="priority">Priority</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
               <div className="text-center p-3 bg-white rounded-lg border-green-200 border">
                 <div className="text-lg font-bold text-green-600">
                   {reportQueue.filter(r => r.status === 'pending' || !r.status).length}
@@ -653,12 +632,6 @@ export default function Moderation() {
                   {reportQueue.filter(r => r.status === 'resolved').length}
                 </div>
                 <div className="text-xs text-green-600">Resolved</div>
-              </div>
-              <div className="text-center p-3 bg-white rounded-lg border-green-200 border">
-                <div className="text-lg font-bold text-green-600">
-                  {reportQueue.filter(r => r.priority === 'High' || r.priority === 'Medium').length}
-                </div>
-                <div className="text-xs text-green-600">Priority</div>
               </div>
               <div className="text-center p-3 bg-white rounded-lg border-green-200 border">
                 <div className="text-lg font-bold text-green-600">
@@ -712,15 +685,6 @@ export default function Moderation() {
                         </p>
                         <p className="text-sm mt-2 text-gray-900">{report.description}</p>
                         <div className="flex items-center space-x-2 mt-2">
-                          <Badge 
-                            variant={
-                              report.priority === 'High' ? 'destructive' : 
-                              report.priority === 'Medium' ? 'default' : 'secondary'
-                            }
-                            className="mt-2"
-                          >
-                            {report.priority} Priority
-                          </Badge>
                           <Badge variant="outline" className="mt-2">
                             {report.category}
                           </Badge>
@@ -760,13 +724,11 @@ export default function Moderation() {
                 <p className="text-lg font-medium">
                   {filterType === 'pending' && "No Pending Reports"}
                   {filterType === 'resolved' && "No Resolved Reports"}
-                  {filterType === 'priority' && "No Priority Reports"}
                   {filterType === 'all' && "No Reports to Review"}
                 </p>
                 <p className="text-sm">
                   {filterType === 'pending' && "All reports have been reviewed"}
                   {filterType === 'resolved' && "No reports have been resolved yet"}
-                  {filterType === 'priority' && "No high or medium priority reports"}
                   {filterType === 'all' && "All content is clean and compliant"}
                 </p>
               </div>
@@ -793,17 +755,6 @@ export default function Moderation() {
                     <label className="text-sm font-medium text-gray-600">Category</label>
                     <div className="mt-1 p-3 bg-gray-50 rounded-md">
                       {selectedReport.category}
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-600">Priority</label>
-                    <div className="mt-1 p-3 bg-gray-50 rounded-md">
-                      <Badge variant={
-                        selectedReport.priority === 'High' ? 'destructive' : 
-                        selectedReport.priority === 'Medium' ? 'default' : 'secondary'
-                      }>
-                        {selectedReport.priority}
-                      </Badge>
                     </div>
                   </div>
                   <div>
