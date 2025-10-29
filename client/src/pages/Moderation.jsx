@@ -24,6 +24,13 @@ export default function Moderation() {
   const [showActionDialog, setShowActionDialog] = useState(false);
   const [actionNotes, setActionNotes] = useState("");
   const [actionType, setActionType] = useState("");
+  
+  // Action-specific settings
+  const [suspensionDuration, setSuspensionDuration] = useState("7");
+  const [warningLevel, setWarningLevel] = useState("minor");
+  const [contentType, setContentType] = useState("post");
+  const [banReason, setBanReason] = useState("violation");
+  
   const { toast } = useToast();
   const { addDocument, updateDocument } = useFirestoreOperations("reports");
   
@@ -306,7 +313,32 @@ export default function Moderation() {
     if (!selectedReport || !actionType) return;
     
     try {
-      console.log('Executing action:', { reportId: selectedReport.id, actionType, actionNotes });
+      console.log('Executing action:', { 
+        reportId: selectedReport.id, 
+        actionType, 
+        actionNotes,
+        settings: {
+          suspensionDuration,
+          warningLevel,
+          contentType,
+          banReason
+        }
+      });
+      
+      // Prepare action data with settings
+      const actionData = {
+        status: 'resolved',
+        actionTaken: actionType,
+        actionNotes: actionNotes,
+        resolvedBy: 'admin',
+        resolvedAt: new Date(),
+        actionSettings: {
+          suspensionDuration: actionType === 'user_suspended' ? suspensionDuration : null,
+          warningLevel: actionType === 'warning_issued' ? warningLevel : null,
+          contentType: actionType === 'content_removed' ? contentType : null,
+          banReason: actionType === 'account_banned' ? banReason : null
+        }
+      };
       
       // Update the report status
       if (selectedReport.id.startsWith('review-') || selectedReport.id.startsWith('user-') || selectedReport.id.startsWith('booking-')) {
@@ -319,23 +351,13 @@ export default function Moderation() {
           description: selectedReport.description,
           reportedBy: selectedReport.reportedBy,
           priority: selectedReport.priority,
-          status: 'resolved',
-          actionTaken: actionType,
-          actionNotes: actionNotes,
-          resolvedBy: 'admin',
-          resolvedAt: new Date(),
+          ...actionData,
           createdAt: new Date(selectedReport.date)
         });
       } else {
         // For direct reports from database, update the existing document
         console.log('Updating existing report in database:', selectedReport.id);
-        await updateDocument(selectedReport.id, {
-          status: 'resolved',
-          actionTaken: actionType,
-          actionNotes: actionNotes,
-          resolvedBy: 'admin',
-          resolvedAt: new Date()
-        });
+        await updateDocument(selectedReport.id, actionData);
       }
 
       toast({
@@ -349,6 +371,10 @@ export default function Moderation() {
       setSelectedReport(null);
       setActionType("");
       setActionNotes("");
+      setSuspensionDuration("7");
+      setWarningLevel("minor");
+      setContentType("post");
+      setBanReason("violation");
       
       // Force refresh of reports data
       console.log('Action completed successfully, data should refresh automatically via Firestore listener');
@@ -848,7 +874,7 @@ export default function Moderation() {
 
         {/* Take Action Dialog */}
         <Dialog open={showActionDialog} onOpenChange={setShowActionDialog}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Take Moderation Action</DialogTitle>
             </DialogHeader>
@@ -865,17 +891,87 @@ export default function Moderation() {
                     <SelectItem value="user_suspended">Suspend User</SelectItem>
                     <SelectItem value="account_banned">Ban Account</SelectItem>
                     <SelectItem value="no_action">No Action Required</SelectItem>
-                    <SelectItem value="escalate">Escalate to Senior Moderator</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Action-specific settings */}
+              {actionType === 'warning_issued' && (
+                <div>
+                  <label className="text-sm font-medium">Warning Level</label>
+                  <Select value={warningLevel} onValueChange={setWarningLevel}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="minor">Minor Warning</SelectItem>
+                      <SelectItem value="major">Major Warning</SelectItem>
+                      <SelectItem value="final">Final Warning</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {actionType === 'content_removed' && (
+                <div>
+                  <label className="text-sm font-medium">Content Type</label>
+                  <Select value={contentType} onValueChange={setContentType}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="post">Post/Comment</SelectItem>
+                      <SelectItem value="profile">Profile Information</SelectItem>
+                      <SelectItem value="media">Media/Images</SelectItem>
+                      <SelectItem value="review">User Review</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {actionType === 'user_suspended' && (
+                <div>
+                  <label className="text-sm font-medium">Suspension Duration</label>
+                  <Select value={suspensionDuration} onValueChange={setSuspensionDuration}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 Day</SelectItem>
+                      <SelectItem value="3">3 Days</SelectItem>
+                      <SelectItem value="7">1 Week</SelectItem>
+                      <SelectItem value="14">2 Weeks</SelectItem>
+                      <SelectItem value="30">1 Month</SelectItem>
+                      <SelectItem value="90">3 Months</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {actionType === 'account_banned' && (
+                <div>
+                  <label className="text-sm font-medium">Ban Reason</label>
+                  <Select value={banReason} onValueChange={setBanReason}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="violation">Terms of Service Violation</SelectItem>
+                      <SelectItem value="harassment">Harassment/Abuse</SelectItem>
+                      <SelectItem value="spam">Spam/Malicious Activity</SelectItem>
+                      <SelectItem value="fraud">Fraud/Scam Activity</SelectItem>
+                      <SelectItem value="repeated">Repeated Violations</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               
               <div>
                 <label className="text-sm font-medium">Action Notes</label>
                 <Textarea
                   value={actionNotes}
                   onChange={(e) => setActionNotes(e.target.value)}
-                  placeholder="Add notes about the action taken..."
+                  placeholder="Add detailed notes about the action taken and reasoning..."
                   className="min-h-[100px]"
                 />
               </div>
