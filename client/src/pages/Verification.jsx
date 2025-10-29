@@ -512,6 +512,32 @@ export default function Verification() {
                             </Button>
                           </>
                         )}
+                        {verification.status === 'approved' && (
+                          <Button 
+                            variant="destructive" 
+                            size="sm"
+                            onClick={() => {
+                              setSelectedVerification(verification);
+                              setIsDenyDialogOpen(true);
+                            }}
+                          >
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Revoke Approval
+                          </Button>
+                        )}
+                        {verification.status === 'rejected' && (
+                          <Button 
+                            size="sm" 
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                            onClick={() => {
+                              setSelectedVerification(verification);
+                              setIsApproveDialogOpen(true);
+                            }}
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Approve Now
+                          </Button>
+                        )}
                         <Dialog>
                           <DialogTrigger asChild>
                             <Button variant="outline" size="sm" onClick={() => setSelectedVerification(verification)}>
@@ -592,6 +618,28 @@ export default function Verification() {
                                         Deny
                                       </Button>
                                     </>
+                                  )}
+                                  {selectedVerification.status === 'approved' && (
+                                    <Button 
+                                      variant="destructive"
+                                      onClick={() => {
+                                        setIsDenyDialogOpen(true);
+                                      }}
+                                    >
+                                      <XCircle className="h-4 w-4 mr-1" />
+                                      Revoke Approval
+                                    </Button>
+                                  )}
+                                  {selectedVerification.status === 'rejected' && (
+                                    <Button 
+                                      className="bg-green-600 hover:bg-green-700 text-white"
+                                      onClick={() => {
+                                        setIsApproveDialogOpen(true);
+                                      }}
+                                    >
+                                      <CheckCircle className="h-4 w-4 mr-1" />
+                                      Approve Now
+                                    </Button>
                                   )}
                                 </div>
                               </div>
