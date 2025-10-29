@@ -18,6 +18,7 @@ export default function Moderation() {
   const [filterType, setFilterType] = useState("all"); // New unified filter state
   const [searchTerm, setSearchTerm] = useState("");
   const [timePeriod, setTimePeriod] = useState("monthly"); // New time period state
+  const [statusFilter, setStatusFilter] = useState("pending"); // New status filter
   const [selectedReport, setSelectedReport] = useState(null);
   const [showReviewDialog, setShowReviewDialog] = useState(false);
   const [showActionDialog, setShowActionDialog] = useState(false);
@@ -305,9 +306,12 @@ export default function Moderation() {
     if (!selectedReport || !actionType) return;
     
     try {
+      console.log('Executing action:', { reportId: selectedReport.id, actionType, actionNotes });
+      
       // Update the report status
       if (selectedReport.id.startsWith('review-') || selectedReport.id.startsWith('user-') || selectedReport.id.startsWith('booking-')) {
         // For system-generated reports, create a new record or update existing
+        console.log('Creating new resolved report record for system-generated report');
         await addDocument({
           originalId: selectedReport.id,
           type: selectedReport.type,
@@ -324,6 +328,7 @@ export default function Moderation() {
         });
       } else {
         // For direct reports from database, update the existing document
+        console.log('Updating existing report in database:', selectedReport.id);
         await updateDocument(selectedReport.id, {
           status: 'resolved',
           actionTaken: actionType,
@@ -338,12 +343,21 @@ export default function Moderation() {
         description: `Report has been resolved with action: ${actionType}`,
       });
 
+      // Reset form and close dialogs
       setShowActionDialog(false);
+      setShowReviewDialog(false);
       setSelectedReport(null);
+      setActionType("");
+      setActionNotes("");
+      
+      // Force refresh of reports data
+      console.log('Action completed successfully, data should refresh automatically via Firestore listener');
+      
     } catch (error) {
+      console.error('Action failed:', error);
       toast({
         title: "Action failed",
-        description: "Failed to complete moderation action",
+        description: `Failed to complete moderation action: ${error.message}`,
         variant: "destructive",
       });
     }
@@ -352,18 +366,29 @@ export default function Moderation() {
   // Filter reports based on current view and search term
   const getDisplayedReports = () => {
     let baseReports;
+    
+    // First filter by status
+    if (statusFilter === 'pending') {
+      baseReports = reportQueue.filter(r => r.status === 'pending' || !r.status);
+    } else if (statusFilter === 'resolved') {
+      baseReports = reportQueue.filter(r => r.status === 'resolved');
+    } else {
+      baseReports = reportQueue; // all statuses
+    }
+    
+    // Then filter by type
     switch(filterType) {
       case 'pending':
-        baseReports = reportQueue.filter(r => r.status === 'pending');
+        baseReports = baseReports.filter(r => r.status === 'pending' || !r.status);
         break;
       case 'resolved':
-        baseReports = reportQueue.filter(r => r.status === 'resolved');
+        baseReports = baseReports.filter(r => r.status === 'resolved');
         break;
       case 'priority':
-        baseReports = reportQueue.filter(r => r.priority === 'High' || r.priority === 'Medium');
+        baseReports = baseReports.filter(r => r.priority === 'High' || r.priority === 'Medium');
         break;
       default:
-        baseReports = reportQueue;
+        // baseReports already filtered by status above
         break;
     }
 
@@ -566,14 +591,24 @@ export default function Moderation() {
                   className="w-full"
                 />
               </div>
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="Filter by status" />
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-[150px]">
+                  <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Reports</SelectItem>
+                  <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="resolved">Resolved</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="w-full sm:w-[150px]">
+                  <SelectValue placeholder="Type Filter" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="pending">Pending Only</SelectItem>
+                  <SelectItem value="resolved">Resolved Only</SelectItem>
                   <SelectItem value="priority">Priority</SelectItem>
                 </SelectContent>
               </Select>
