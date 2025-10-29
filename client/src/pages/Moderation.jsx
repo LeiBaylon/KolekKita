@@ -126,13 +126,18 @@ export default function Moderation() {
     // Direct reports from database
     ...filteredReports.map(report => ({
       id: report.id,
-      type: report.type || 'Content Violation',
+      type: report.reportType || report.type || 'Content Violation',
       category: report.category || 'General',
-      description: report.description || 'No description provided',
-      reportedBy: report.reportedBy || 'System',
+      description: report.reportReason || report.description || 'No description provided',
+      reportedBy: report.reporterName || report.reportedBy || 'System',
+      reportedUser: report.reportedUserName || null,
+      reportedUserId: report.reportedUserId || null,
+      reporterId: report.reporterId || null,
+      evidenceFiles: report.evidenceFiles || [],
       priority: report.priority || 'Medium',
-      date: getValidDate(report.createdAt).toISOString(),
-      status: report.status || 'pending'
+      date: getValidDate(report.createdAt || report.timestamp).toISOString(),
+      status: report.status || 'pending',
+      originalReport: report // Keep reference to original data
     })),
     // Flagged reviews
     ...flaggedReviews.map(review => ({
@@ -746,6 +751,14 @@ export default function Moderation() {
                       {selectedReport.reportedBy}
                     </div>
                   </div>
+                  {selectedReport.reportedUser && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Reported User</label>
+                      <div className="mt-1 p-3 bg-gray-50 rounded-md">
+                        {selectedReport.reportedUser}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 <div>
@@ -754,6 +767,19 @@ export default function Moderation() {
                     {selectedReport.description}
                   </div>
                 </div>
+
+                {selectedReport.evidenceFiles && selectedReport.evidenceFiles.length > 0 && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Evidence Files</label>
+                    <div className="mt-1 p-3 bg-gray-50 rounded-md space-y-2">
+                      {selectedReport.evidenceFiles.map((file, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          <span className="text-sm text-blue-600 underline">{file}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 
                 <div>
                   <label className="text-sm font-medium text-gray-600">Report Date</label>
