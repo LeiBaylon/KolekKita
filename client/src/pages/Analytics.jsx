@@ -70,48 +70,32 @@ export default function Analytics() {
     pendingVerifications: verifications.filter(v => v.status === 'pending' || !v.status).length
   };
 
-  // Calculate material trends and growth rates
+  // Calculate trends and growth rates
   const calculateTrends = () => {
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
     const sixtyDaysAgo = new Date(now.getTime() - (60 * 24 * 60 * 60 * 1000));
 
-    // Recent material collections (last 30 days)
-    const recentBookings = bookings.filter(b => getValidDate(b.createdAt) > thirtyDaysAgo && b.status === 'completed').length;
-    const previousBookings = bookings.filter(b => {
-      const date = getValidDate(b.createdAt);
-      return date > sixtyDaysAgo && date <= thirtyDaysAgo && b.status === 'completed';
+    const recentUsers = users.filter(u => getValidDate(u.createdAt) > thirtyDaysAgo).length;
+    const previousUsers = users.filter(u => {
+      const date = getValidDate(u.createdAt);
+      return date > sixtyDaysAgo && date <= thirtyDaysAgo;
     }).length;
 
-    // Calculate material-specific trends based on booking patterns
-    const recentPaperWaste = Math.floor(recentBookings * 0.35); // 35% of collections
-    const previousPaperWaste = Math.floor(previousBookings * 0.35);
-    
-    const recentMetalScraps = Math.floor(recentBookings * 0.23); // 23% of collections
-    const previousMetalScraps = Math.floor(previousBookings * 0.23);
-    
-    const recentElectronicWaste = Math.floor(recentBookings * 0.18); // 18% of collections
-    const previousElectronicWaste = Math.floor(previousBookings * 0.18);
+    const recentBookings = bookings.filter(b => getValidDate(b.createdAt) > thirtyDaysAgo).length;
+    const previousBookings = bookings.filter(b => {
+      const date = getValidDate(b.createdAt);
+      return date > sixtyDaysAgo && date <= thirtyDaysAgo;
+    }).length;
 
-    // Calculate trends for each material type
-    const paperWasteTrend = previousPaperWaste > 0 ? ((recentPaperWaste - previousPaperWaste) / previousPaperWaste) * 100 : recentPaperWaste > 0 ? 100 : 0;
-    const metalScrapsTrend = previousMetalScraps > 0 ? ((recentMetalScraps - previousMetalScraps) / previousMetalScraps) * 100 : recentMetalScraps > 0 ? 100 : 0;
-    const electronicWasteTrend = previousElectronicWaste > 0 ? ((recentElectronicWaste - previousElectronicWaste) / previousElectronicWaste) * 100 : recentElectronicWaste > 0 ? 100 : 0;
-
-    // Calculate total weight trends
-    const recentWeight = recentBookings * averageWeightPerBooking; // kg
-    const previousWeight = previousBookings * averageWeightPerBooking; // kg
-    const weightTrend = previousWeight > 0 ? ((recentWeight - previousWeight) / previousWeight) * 100 : recentWeight > 0 ? 100 : 0;
+    const userTrend = previousUsers > 0 ? ((recentUsers - previousUsers) / previousUsers) * 100 : recentUsers > 0 ? 100 : 0;
+    const bookingTrend = previousBookings > 0 ? ((recentBookings - previousBookings) / previousBookings) * 100 : recentBookings > 0 ? 100 : 0;
 
     return {
-      paperWasteGrowth: paperWasteTrend,
-      metalScrapsGrowth: metalScrapsTrend, 
-      electronicWasteGrowth: electronicWasteTrend,
-      weightGrowth: weightTrend,
-      recentPaperWaste,
-      recentMetalScraps,
-      recentElectronicWaste,
-      recentWeight
+      userGrowth: userTrend,
+      bookingGrowth: bookingTrend,
+      recentUsers,
+      recentBookings
     };
   };
 
@@ -129,26 +113,20 @@ export default function Analytics() {
           const date = new Date(now.getTime() - (i * 24 * 60 * 60 * 1000));
           const dateStr = date.toISOString().split('T')[0];
           
-          const dayBookings = bookings.filter(b => {
-            const bookingDate = getValidDate(b.createdAt);
-            return bookingDate.toISOString().split('T')[0] === dateStr && b.status === 'completed';
+          const dayUsers = users.filter(u => {
+            const userDate = getValidDate(u.createdAt);
+            return userDate.toISOString().split('T')[0] === dateStr;
           }).length;
           
-          // Calculate material collections for the day
-          const paperWaste = Math.floor(dayBookings * 0.35);
-          const metalScraps = Math.floor(dayBookings * 0.23);
-          const electronicWaste = Math.floor(dayBookings * 0.18);
-          const plasticItems = Math.floor(dayBookings * 0.15);
-          const totalWeight = dayBookings * averageWeightPerBooking;
+          const dayBookings = bookings.filter(b => {
+            const bookingDate = getValidDate(b.createdAt);
+            return bookingDate.toISOString().split('T')[0] === dateStr;
+          }).length;
           
           data.push({
             period: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            paperWaste,
-            metalScraps,
-            electronicWaste,
-            plasticItems,
-            totalWeight,
-            collections: dayBookings,
+            users: dayUsers,
+            bookings: dayBookings,
             date: dateStr
           });
         }
@@ -160,26 +138,20 @@ export default function Analytics() {
           const weekStart = new Date(now.getTime() - (i * 7 * 24 * 60 * 60 * 1000));
           const weekEnd = new Date(weekStart.getTime() + (6 * 24 * 60 * 60 * 1000));
           
-          const weekBookings = bookings.filter(b => {
-            const bookingDate = getValidDate(b.createdAt);
-            return bookingDate >= weekStart && bookingDate <= weekEnd && b.status === 'completed';
+          const weekUsers = users.filter(u => {
+            const userDate = getValidDate(u.createdAt);
+            return userDate >= weekStart && userDate <= weekEnd;
           }).length;
           
-          // Calculate material collections for the week
-          const paperWaste = Math.floor(weekBookings * 0.35);
-          const metalScraps = Math.floor(weekBookings * 0.23);
-          const electronicWaste = Math.floor(weekBookings * 0.18);
-          const plasticItems = Math.floor(weekBookings * 0.15);
-          const totalWeight = weekBookings * averageWeightPerBooking;
+          const weekBookings = bookings.filter(b => {
+            const bookingDate = getValidDate(b.createdAt);
+            return bookingDate >= weekStart && bookingDate <= weekEnd;
+          }).length;
           
           data.push({
             period: `W${12-i}`,
-            paperWaste,
-            metalScraps,
-            electronicWaste,
-            plasticItems,
-            totalWeight,
-            collections: weekBookings,
+            users: weekUsers,
+            bookings: weekBookings,
             weekStart: weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
           });
         }
@@ -191,26 +163,20 @@ export default function Analytics() {
         for (let i = 4; i >= 0; i--) {
           const year = currentYear - i;
           
-          const yearBookings = bookings.filter(b => {
-            const bookingDate = getValidDate(b.createdAt);
-            return bookingDate.getFullYear() === year && b.status === 'completed';
+          const yearUsers = users.filter(u => {
+            const userDate = getValidDate(u.createdAt);
+            return userDate.getFullYear() === year;
           }).length;
           
-          // Calculate material collections for the year
-          const paperWaste = Math.floor(yearBookings * 0.35);
-          const metalScraps = Math.floor(yearBookings * 0.23);
-          const electronicWaste = Math.floor(yearBookings * 0.18);
-          const plasticItems = Math.floor(yearBookings * 0.15);
-          const totalWeight = yearBookings * averageWeightPerBooking;
+          const yearBookings = bookings.filter(b => {
+            const bookingDate = getValidDate(b.createdAt);
+            return bookingDate.getFullYear() === year;
+          }).length;
           
           data.push({
             period: year.toString(),
-            paperWaste,
-            metalScraps,
-            electronicWaste,
-            plasticItems,
-            totalWeight,
-            collections: yearBookings
+            users: yearUsers,
+            bookings: yearBookings
           });
         }
         break;
@@ -222,27 +188,22 @@ export default function Analytics() {
           const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
           const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
           
+          const monthUsers = users.filter(u => {
+            const userDate = getValidDate(u.createdAt);
+            return userDate.getFullYear() === date.getFullYear() && 
+                   userDate.getMonth() === date.getMonth();
+          }).length;
+          
           const monthBookings = bookings.filter(b => {
             const bookingDate = getValidDate(b.createdAt);
             return bookingDate.getFullYear() === date.getFullYear() && 
-                   bookingDate.getMonth() === date.getMonth() && b.status === 'completed';
+                   bookingDate.getMonth() === date.getMonth();
           }).length;
-          
-          // Calculate material collections for the month
-          const paperWaste = Math.floor(monthBookings * 0.35);
-          const metalScraps = Math.floor(monthBookings * 0.23);
-          const electronicWaste = Math.floor(monthBookings * 0.18);
-          const plasticItems = Math.floor(monthBookings * 0.15);
-          const totalWeight = monthBookings * averageWeightPerBooking;
           
           data.push({
             period: `${date.toLocaleDateString('en-US', { month: 'short' })} 1`,
-            paperWaste,
-            metalScraps,
-            electronicWaste,
-            plasticItems,
-            totalWeight,
-            collections: monthBookings,
+            users: monthUsers,
+            bookings: monthBookings,
             // Add month start date for consistency
             monthStart: date.toISOString().split('T')[0],
             // Add explicit month label starting from 1st
@@ -461,24 +422,52 @@ export default function Analytics() {
           </CardContent>
         </Card>
 
-        {/* Key Stats Grid - Enhanced with material trend indicators */}
+        {/* Key Stats Grid - Enhanced with trend indicators */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card className="bg-white border border-gray-200">
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-green-600">Paper Waste Collections</p>
-                  <p className="text-2xl font-bold text-green-900">{Math.floor(completedBookings.length * 0.35).toLocaleString()}</p>
+                  <p className="text-sm font-medium text-green-600">Total Users</p>
+                  <p className="text-2xl font-bold text-green-900">{analyticsStats.totalUsers.toLocaleString()}</p>
                   <p className="text-xs text-gray-500 flex items-center mt-1">
-                    {trends.paperWasteGrowth >= 0 ? (
+                    {trends.userGrowth >= 0 ? (
                       <>
                         <TrendingUp className="h-3 w-3 text-green-600 mr-1" />
-                        <span className="text-green-600">+{trends.paperWasteGrowth.toFixed(1)}%</span>
+                        <span className="text-green-600">+{trends.userGrowth.toFixed(1)}%</span>
                       </>
                     ) : (
                       <>
                         <TrendingDown className="h-3 w-3 text-red-600 mr-1" />
-                        <span className="text-red-600">{trends.paperWasteGrowth.toFixed(1)}%</span>
+                        <span className="text-red-600">{trends.userGrowth.toFixed(1)}%</span>
+                      </>
+                    )}
+                    <span className="ml-1">vs last month</span>
+                  </p>
+                </div>
+                <div className="w-10 h-10 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                  <Users className="h-5 w-5 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white border border-gray-200">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-green-600">Bookings</p>
+                  <p className="text-2xl font-bold text-green-900">{bookings.length.toLocaleString()}</p>
+                  <p className="text-xs text-gray-500 flex items-center mt-1">
+                    {trends.bookingGrowth >= 0 ? (
+                      <>
+                        <TrendingUp className="h-3 w-3 text-green-600 mr-1" />
+                        <span className="text-green-600">+{trends.bookingGrowth.toFixed(1)}%</span>
+                      </>
+                    ) : (
+                      <>
+                        <TrendingDown className="h-3 w-3 text-red-600 mr-1" />
+                        <span className="text-red-600">{trends.bookingGrowth.toFixed(1)}%</span>
                       </>
                     )}
                     <span className="ml-1">vs last month</span>
@@ -495,50 +484,11 @@ export default function Analytics() {
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-green-600">Metal Scraps Collections</p>
-                  <p className="text-2xl font-bold text-green-900">{Math.floor(completedBookings.length * 0.23).toLocaleString()}</p>
-                  <p className="text-xs text-gray-500 flex items-center mt-1">
-                    {trends.metalScrapsGrowth >= 0 ? (
-                      <>
-                        <TrendingUp className="h-3 w-3 text-green-600 mr-1" />
-                        <span className="text-green-600">+{trends.metalScrapsGrowth.toFixed(1)}%</span>
-                      </>
-                    ) : (
-                      <>
-                        <TrendingDown className="h-3 w-3 text-red-600 mr-1" />
-                        <span className="text-red-600">{trends.metalScrapsGrowth.toFixed(1)}%</span>
-                      </>
-                    )}
-                    <span className="ml-1">vs last month</span>
-                  </p>
-                </div>
-                <div className="w-10 h-10 bg-blue-500 bg-opacity-20 rounded-lg flex items-center justify-center">
-                  <Activity className="h-5 w-5 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white border border-gray-200">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between">
-                <div>
                   <p className="text-sm font-medium text-green-600">Total Weight (kg)</p>
                   <p className="text-2xl font-bold text-green-900">{analyticsStats.totalWeight.toLocaleString()}</p>
-                  <p className="text-xs text-gray-500 flex items-center mt-1">
-                    {trends.weightGrowth >= 0 ? (
-                      <>
-                        <TrendingUp className="h-3 w-3 text-green-600 mr-1" />
-                        <span className="text-green-600">+{trends.weightGrowth.toFixed(1)}%</span>
-                      </>
-                    ) : (
-                      <>
-                        <TrendingDown className="h-3 w-3 text-red-600 mr-1" />
-                        <span className="text-red-600">{trends.weightGrowth.toFixed(1)}%</span>
-                      </>
-                    )}
-                    <span className="ml-1">vs last month</span>
-                  </p>
+                  <div className="flex items-center mt-2">
+                    <span className="text-xs text-green-600">Avg: {completedBookings.length > 0 ? averageWeightPerBooking : 0}kg per pickup</span>
+                  </div>
                 </div>
                 <div className="w-10 h-10 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
                   <Recycle className="h-5 w-5 text-green-600" />
@@ -586,10 +536,8 @@ export default function Analytics() {
                         borderRadius: '6px'
                       }}
                     />
-                    <Bar dataKey="paperWaste" fill="#22c55e" name="Paper Waste" radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="metalScraps" fill="#3b82f6" name="Metal Scraps" radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="electronicWaste" fill="#f59e0b" name="Electronic Waste" radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="plasticItems" fill="#ef4444" name="Plastic Items" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="users" fill="#22c55e" name="Users" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="bookings" fill="#3b82f6" name="Bookings" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
