@@ -82,15 +82,20 @@ export default function Users() {
 
   const handleStatusChange = async (userId, isActive) => {
     try {
-      await updateDocument(userId, { isActive });
+      console.log(`Updating user ${userId} status to ${isActive}`);
+      await updateDocument(userId, { 
+        isActive,
+        updatedAt: new Date()
+      });
       toast({
         title: "Status updated",
         description: `User ${isActive ? 'activated' : 'deactivated'} successfully`,
       });
     } catch (error) {
+      console.error("Error updating user status:", error);
       toast({
         title: "Update failed",
-        description: "Failed to update user status",
+        description: "Failed to update user status. Please try again.",
         variant: "destructive",
       });
     }
@@ -169,7 +174,7 @@ export default function Users() {
         user.email,
         user.phone || 'N/A',
         user.role,
-        user.isActive ? 'Active' : 'Inactive',
+        user.isActive !== false ? 'Active' : 'Inactive',
         getValidDate(user.createdAt).toLocaleDateString('en-US')
       ]);
 
@@ -370,10 +375,10 @@ export default function Users() {
                               {getRoleIcon(user.role)} {user.role}
                             </Badge>
                             <Badge 
-                              variant={user.isActive ? "default" : "secondary"}
+                              variant={user.isActive !== false ? "default" : "secondary"}
                               className="text-xs"
                             >
-                              {user.isActive ? "Active" : "Inactive"}
+                              {user.isActive !== false ? "Active" : "Inactive"}
                             </Badge>
                           </div>
                           
@@ -402,7 +407,7 @@ export default function Users() {
 
                       <div className="flex items-center space-x-2">
                         <Select 
-                          value={user.isActive ? "active" : "inactive"}
+                          value={user.isActive !== false ? "active" : "inactive"}
                           onValueChange={(value) => handleStatusChange(user.id, value === "active")}
                           data-testid={`select-status-${user.id}`}
                         >
@@ -473,8 +478,8 @@ export default function Users() {
                       <Badge variant={getRoleBadgeVariant(selectedUser.role)}>
                         {getRoleIcon(selectedUser.role)} {selectedUser.role}
                       </Badge>
-                      <Badge variant={selectedUser.isActive ? "default" : "secondary"}>
-                        {selectedUser.isActive ? "Active" : "Inactive"}
+                      <Badge variant={selectedUser.isActive !== false ? "default" : "secondary"}>
+                        {selectedUser.isActive !== false ? "Active" : "Inactive"}
                       </Badge>
                     </div>
                   </div>
@@ -511,7 +516,7 @@ export default function Users() {
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-600">Status</label>
-                      <p className="text-sm">{selectedUser.isActive ? "Active User" : "Inactive User"}</p>
+                      <p className="text-sm">{selectedUser.isActive !== false ? "Active User" : "Inactive User"}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-600">User ID</label>

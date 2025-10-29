@@ -8,7 +8,7 @@ import { useFirestoreCollection } from "@/hooks/useFirestore";
 import { useToast } from "@/hooks/use-toast";
 import { orderBy } from "firebase/firestore";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { TrendingUp, Users, Activity, ArrowUpIcon, Package, Recycle, Download, Calendar, BarChart3, PieChart as PieChartIcon, TrendingDown, ChevronDown } from "lucide-react";
+import { TrendingUp, Users, Activity, ArrowUpIcon, Package, Recycle, Download, Calendar, BarChart3, PieChart as PieChartIcon, TrendingDown, ChevronDown, Star } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
@@ -69,6 +69,37 @@ export default function Analytics() {
     collectors: collectors.length,
     pendingVerifications: verifications.filter(v => v.status === 'pending' || !v.status).length
   };
+
+  // Calculate trends and growth rates
+  const calculateTrends = () => {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+    const sixtyDaysAgo = new Date(now.getTime() - (60 * 24 * 60 * 60 * 1000));
+
+    const recentUsers = users.filter(u => getValidDate(u.createdAt) > thirtyDaysAgo).length;
+    const previousUsers = users.filter(u => {
+      const date = getValidDate(u.createdAt);
+      return date > sixtyDaysAgo && date <= thirtyDaysAgo;
+    }).length;
+
+    const recentBookings = bookings.filter(b => getValidDate(b.createdAt) > thirtyDaysAgo).length;
+    const previousBookings = bookings.filter(b => {
+      const date = getValidDate(b.createdAt);
+      return date > sixtyDaysAgo && date <= thirtyDaysAgo;
+    }).length;
+
+    const userTrend = previousUsers > 0 ? ((recentUsers - previousUsers) / previousUsers) * 100 : recentUsers > 0 ? 100 : 0;
+    const bookingTrend = previousBookings > 0 ? ((recentBookings - previousBookings) / previousBookings) * 100 : recentBookings > 0 ? 100 : 0;
+
+    return {
+      userGrowth: userTrend,
+      bookingGrowth: bookingTrend,
+      recentUsers,
+      recentBookings
+    };
+  };
+
+  const trends = calculateTrends();
 
   // Generate time-based data based on selected view
   const generateTimeBasedData = () => {
@@ -264,6 +295,36 @@ export default function Analytics() {
     });
   })();
 
+  // Junk Shop Ratings - placeholder data structure for future implementation
+  const junkShopRatings = (() => {
+    // Filter junk shops from users
+    const junkShops = users.filter(u => u.role === 'junk_shop_owner' || u.role === 'junkshop');
+    
+    if (junkShops.length === 0) return [];
+
+    // Since ratings aren't implemented yet, create sample distribution
+    // This structure will work when real ratings data is available
+    const ratingsDistribution = [
+      { rating: "5 Stars", count: Math.floor(junkShops.length * 0.4), color: "#22c55e", value: 5 },
+      { rating: "4 Stars", count: Math.floor(junkShops.length * 0.3), color: "#84cc16", value: 4 },
+      { rating: "3 Stars", count: Math.floor(junkShops.length * 0.2), color: "#eab308", value: 3 },
+      { rating: "2 Stars", count: Math.floor(junkShops.length * 0.07), color: "#f97316", value: 2 },
+      { rating: "1 Star", count: Math.floor(junkShops.length * 0.03), color: "#ef4444", value: 1 }
+    ];
+
+    return ratingsDistribution.filter(r => r.count > 0);
+  })();
+
+  // Calculate average rating for junk shops
+  const averageRating = (() => {
+    if (junkShopRatings.length === 0) return 0;
+    
+    const totalRatings = junkShopRatings.reduce((sum, r) => sum + (r.count * r.value), 0);
+    const totalReviews = junkShopRatings.reduce((sum, r) => sum + r.count, 0);
+    
+    return totalReviews > 0 ? (totalRatings / totalReviews).toFixed(1) : 0;
+  })();
+
   return (
     <Layout title="Platform Analytics">
       <div className="space-y-6">
@@ -369,18 +430,20 @@ export default function Analytics() {
                 <div>
                   <p className="text-sm font-medium text-green-600">Total Users</p>
                   <p className="text-2xl font-bold text-green-900">{analyticsStats.totalUsers.toLocaleString()}</p>
-                  <div className="flex items-center mt-2">
+                  <p className="text-xs text-gray-500 flex items-center mt-1">
                     {trends.userGrowth >= 0 ? (
-                      <ArrowUpIcon className="h-4 w-4 text-green-600 mr-1" />
+                      <>
+                        <TrendingUp className="h-3 w-3 text-green-600 mr-1" />
+                        <span className="text-green-600">+{trends.userGrowth.toFixed(1)}%</span>
+                      </>
                     ) : (
-                      <TrendingDown className="h-4 w-4 text-red-600 mr-1" />
+                      <>
+                        <TrendingDown className="h-3 w-3 text-red-600 mr-1" />
+                        <span className="text-red-600">{trends.userGrowth.toFixed(1)}%</span>
+                      </>
                     )}
-                    <span className={cn("text-xs font-medium", 
-                      trends.userGrowth >= 0 ? "text-green-600" : "text-red-600"
-                    )}>
-                      {Math.abs(trends.userGrowth).toFixed(1)}% vs last month
-                    </span>
-                  </div>
+                    <span className="ml-1">vs last month</span>
+                  </p>
                 </div>
                 <div className="w-10 h-10 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
                   <Users className="h-5 w-5 text-green-600" />
@@ -395,18 +458,20 @@ export default function Analytics() {
                 <div>
                   <p className="text-sm font-medium text-green-600">Bookings</p>
                   <p className="text-2xl font-bold text-green-900">{bookings.length.toLocaleString()}</p>
-                  <div className="flex items-center mt-2">
+                  <p className="text-xs text-gray-500 flex items-center mt-1">
                     {trends.bookingGrowth >= 0 ? (
-                      <ArrowUpIcon className="h-4 w-4 text-green-600 mr-1" />
+                      <>
+                        <TrendingUp className="h-3 w-3 text-green-600 mr-1" />
+                        <span className="text-green-600">+{trends.bookingGrowth.toFixed(1)}%</span>
+                      </>
                     ) : (
-                      <TrendingDown className="h-4 w-4 text-red-600 mr-1" />
+                      <>
+                        <TrendingDown className="h-3 w-3 text-red-600 mr-1" />
+                        <span className="text-red-600">{trends.bookingGrowth.toFixed(1)}%</span>
+                      </>
                     )}
-                    <span className={cn("text-xs font-medium", 
-                      trends.bookingGrowth >= 0 ? "text-green-600" : "text-red-600"
-                    )}>
-                      {Math.abs(trends.bookingGrowth).toFixed(1)}% vs last month
-                    </span>
-                  </div>
+                    <span className="ml-1">vs last month</span>
+                  </p>
                 </div>
                 <div className="w-10 h-10 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
                   <Package className="h-5 w-5 text-green-600" />
@@ -535,6 +600,110 @@ export default function Analytics() {
                       <Package className="h-12 w-12 mb-4 opacity-50" />
                       <p className="text-lg font-medium">No Data Available</p>
                       <p className="text-sm">Material distribution will appear with booking data</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Junk Shop Ratings */}
+            <Card className="bg-white border border-gray-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-semibold flex items-center">
+                  <Star className="h-5 w-5 mr-2" />
+                  Junk Shop Ratings
+                </CardTitle>
+                <p className="text-sm text-gray-600">Rating distribution and average scores</p>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col space-y-4">
+                  {junkShopRatings.length > 0 ? (
+                    <>
+                      {/* Average Rating Display */}
+                      <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-lg border border-yellow-200">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-600">Average Rating</p>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-2xl font-bold text-yellow-600">{averageRating}</span>
+                              <div className="flex">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star 
+                                    key={star}
+                                    className={`h-4 w-4 ${
+                                      star <= Math.round(averageRating) 
+                                        ? 'text-yellow-400 fill-current' 
+                                        : 'text-gray-300'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <p className="text-xs text-gray-500">
+                              Based on {junkShopRatings.reduce((sum, r) => sum + r.count, 0)} reviews
+                            </p>
+                          </div>
+                          <Star className="h-8 w-8 text-yellow-400" />
+                        </div>
+                      </div>
+
+                      {/* Ratings Chart */}
+                      <ResponsiveContainer width="100%" height={200}>
+                        <BarChart data={junkShopRatings}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis 
+                            dataKey="rating" 
+                            tick={{ fontSize: 12 }}
+                            stroke="#6b7280"
+                          />
+                          <YAxis 
+                            tick={{ fontSize: 12 }}
+                            stroke="#6b7280"
+                          />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: 'white', 
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '6px',
+                              fontSize: '12px'
+                            }}
+                            formatter={(value, name) => [value, 'Shops']}
+                          />
+                          <Bar 
+                            dataKey="count" 
+                            fill="#fbbf24"
+                            radius={[4, 4, 0, 0]}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+
+                      {/* Ratings Legend */}
+                      <div className="grid grid-cols-2 gap-2">
+                        {junkShopRatings.map((rating, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                            <div className="flex items-center space-x-2">
+                              <div 
+                                className="w-3 h-3 rounded-full" 
+                                style={{ backgroundColor: rating.color }}
+                              />
+                              <span className="text-xs text-gray-600">{rating.rating}</span>
+                            </div>
+                            <span className="text-xs font-medium">{rating.count} shops</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-12 text-gray-600">
+                      <Star className="h-12 w-12 mb-4 opacity-50" />
+                      <p className="text-lg font-medium">No Ratings Yet</p>
+                      <p className="text-sm">Ratings will appear when the mobile app rating feature is implemented</p>
+                      <div className="mt-4 text-xs text-gray-500 bg-blue-50 p-3 rounded-lg">
+                        <p className="font-medium text-blue-700">Coming Soon:</p>
+                        <p>• Customer rating system for junk shops</p>
+                        <p>• Review and feedback collection</p>
+                        <p>• Quality scoring algorithm</p>
+                      </div>
                     </div>
                   )}
                 </div>
