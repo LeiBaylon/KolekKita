@@ -70,37 +70,6 @@ export default function Analytics() {
     pendingVerifications: verifications.filter(v => v.status === 'pending' || !v.status).length
   };
 
-  // Calculate trends and growth rates
-  const calculateTrends = () => {
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
-    const sixtyDaysAgo = new Date(now.getTime() - (60 * 24 * 60 * 60 * 1000));
-
-    const recentUsers = users.filter(u => getValidDate(u.createdAt) > thirtyDaysAgo).length;
-    const previousUsers = users.filter(u => {
-      const date = getValidDate(u.createdAt);
-      return date > sixtyDaysAgo && date <= thirtyDaysAgo;
-    }).length;
-
-    const recentBookings = bookings.filter(b => getValidDate(b.createdAt) > thirtyDaysAgo).length;
-    const previousBookings = bookings.filter(b => {
-      const date = getValidDate(b.createdAt);
-      return date > sixtyDaysAgo && date <= thirtyDaysAgo;
-    }).length;
-
-    const userTrend = previousUsers > 0 ? ((recentUsers - previousUsers) / previousUsers) * 100 : recentUsers > 0 ? 100 : 0;
-    const bookingTrend = previousBookings > 0 ? ((recentBookings - previousBookings) / previousBookings) * 100 : recentBookings > 0 ? 100 : 0;
-
-    return {
-      userGrowth: userTrend,
-      bookingGrowth: bookingTrend,
-      recentUsers,
-      recentBookings
-    };
-  };
-
-  const trends = calculateTrends();
-
   // Generate time-based data based on selected view
   const generateTimeBasedData = () => {
     const now = new Date();
@@ -634,60 +603,6 @@ export default function Analytics() {
               </ResponsiveContainer>
             </CardContent>
           </Card>
-
-          {/* Trend Summary Cards - Added to Overview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card className="bg-white border border-gray-200">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-blue-600">User Growth Rate</p>
-                    <p className="text-xl font-bold text-blue-900">
-                      {trends.userGrowth >= 0 ? '+' : ''}{trends.userGrowth.toFixed(1)}%
-                    </p>
-                    <p className="text-xs text-blue-600">{trends.recentUsers} new users</p>
-                  </div>
-                  {trends.userGrowth >= 0 ? 
-                    <TrendingUp className="h-8 w-8 text-blue-600" /> : 
-                    <TrendingDown className="h-8 w-8 text-red-600" />
-                  }
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white border border-gray-200">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-purple-600">Booking Growth</p>
-                    <p className="text-xl font-bold text-purple-900">
-                      {trends.bookingGrowth >= 0 ? '+' : ''}{trends.bookingGrowth.toFixed(1)}%
-                    </p>
-                    <p className="text-xs text-purple-600">{trends.recentBookings} new bookings</p>
-                  </div>
-                  {trends.bookingGrowth >= 0 ? 
-                    <TrendingUp className="h-8 w-8 text-purple-600" /> : 
-                    <TrendingDown className="h-8 w-8 text-red-600" />
-                  }
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white border border-gray-200">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-orange-600">Completion Rate</p>
-                    <p className="text-xl font-bold text-orange-900">
-                      {bookings.length > 0 ? ((completedBookings.length / bookings.length) * 100).toFixed(1) : 0}%
-                    </p>
-                    <p className="text-xs text-orange-600">{completedBookings.length} completed</p>
-                  </div>
-                  <Activity className="h-8 w-8 text-orange-600" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
         </div>
       </div>
     </Layout>
