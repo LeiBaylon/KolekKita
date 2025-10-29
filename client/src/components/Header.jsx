@@ -66,12 +66,6 @@ export const Header = ({ title, onMenuToggle }) => {
       </div>
 
       <div className="flex items-center space-x-4">
-        {/* Real-time Status Indicator */}
-        <div className="flex items-center space-x-2" data-testid="status-realtime">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-          <span className="text-sm text-gray-600">Live</span>
-        </div>
-
         {/* User Profile */}
         <div className="flex items-center space-x-3">
           <Avatar className="h-8 w-8" data-testid="avatar-user">
