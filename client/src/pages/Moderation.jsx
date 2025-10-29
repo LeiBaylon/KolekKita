@@ -890,7 +890,6 @@ export default function Moderation() {
                     <SelectItem value="content_removed">Remove Content</SelectItem>
                     <SelectItem value="user_suspended">Suspend User</SelectItem>
                     <SelectItem value="account_banned">Ban Account</SelectItem>
-                    <SelectItem value="no_action">No Action Required</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
