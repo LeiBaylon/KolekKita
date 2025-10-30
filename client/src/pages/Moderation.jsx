@@ -138,15 +138,15 @@ export default function Moderation() {
       status: 'pending'
     }))
   ].sort((a, b) => {
-    // Sort by priority (High, Medium, Low) then by date
-    const priorityOrder = { 'High': 3, 'Medium': 2, 'Low': 1 };
-    const aPriority = priorityOrder[a.priority] || 0;
-    const bPriority = priorityOrder[b.priority] || 0;
+    // First sort by status: pending reports come first
+    const aStatus = a.status === 'pending' || !a.status ? 0 : 1;
+    const bStatus = b.status === 'pending' || !b.status ? 0 : 1;
     
-    if (aPriority !== bPriority) {
-      return bPriority - aPriority;
+    if (aStatus !== bStatus) {
+      return aStatus - bStatus;
     }
     
+    // Within same status, sort by date (newest first)
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 
