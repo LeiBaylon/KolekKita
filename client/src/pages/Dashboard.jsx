@@ -149,7 +149,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold mb-2">
-                  Admin Dashboard 👨‍💼
+                  Admin Dashboard
                 </h1>
                 <p className="text-green-100">
                   Platform management and oversight center

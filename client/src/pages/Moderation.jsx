@@ -253,7 +253,7 @@ export default function Moderation() {
           <CardContent className="p-8">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold mb-2">Content Moderation 🛡️</h1>
+                <h1 className="text-3xl font-bold mb-2">Content Moderation</h1>
                 <p className="text-green-100">Review reports, reviews, and manage platform content</p>
               </div>
             </div>
@@ -262,17 +262,6 @@ export default function Moderation() {
 
         {/* Reports Queue */}
         <Card className="bg-white">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>All Reports Queue</span>
-              <Badge variant="outline">
-                {reportQueue.length} {reportQueue.length === 1 ? 'Report' : 'Reports'}
-              </Badge>
-            </CardTitle>
-            <p className="text-sm text-gray-600">
-              Review and moderate flagged content
-            </p>
-          </CardHeader>
           <CardContent className="space-y-4">
             {reportQueue.length > 0 ? (
               reportQueue.map((report, index) => (

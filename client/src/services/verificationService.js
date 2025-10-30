@@ -60,6 +60,15 @@ export class VerificationService {
    */
   static async updateVerificationStatus(verificationId, status, adminId, options = {}) {
     try {
+      // Validate that verificationId exists
+      if (!verificationId || typeof verificationId !== 'string') {
+        throw new Error(`Invalid verification ID: ${verificationId}`);
+      }
+
+      console.log('🎯 Updating EXISTING verification document with ID:', verificationId);
+      console.log('📍 Collection:', this.COLLECTION_NAME);
+      console.log('🔄 New status:', status);
+      
       const verificationRef = doc(db, this.COLLECTION_NAME, verificationId);
       
       const updateData = {
@@ -80,16 +89,19 @@ export class VerificationService {
         updateData.adminNotes = options.adminNotes;
       }
 
-      console.log('Updating verification document:', {
+      console.log('📝 Updating verification document:', {
         verificationId,
         collection: this.COLLECTION_NAME,
         updateData,
-        status
+        status,
+        method: 'updateDoc (NOT creating new document)'
       });
 
+      // THIS UPDATES THE EXISTING DOCUMENT - DOES NOT CREATE A NEW ONE
       await updateDoc(verificationRef, updateData);
       
       console.log(`✅ Verification ${verificationId} status successfully updated to ${status} in Firebase`);
+      console.log(`✅ CONFIRMED: Updated existing document, did NOT create new document`);
       console.log('Full update data applied:', updateData);
     } catch (error) {
       console.error("❌ Error updating verification status:", error);
@@ -97,7 +109,8 @@ export class VerificationService {
         verificationId,
         status,
         adminId,
-        options
+        options,
+        errorMessage: error.message
       });
       throw error;
     }

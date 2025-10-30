@@ -164,13 +164,13 @@ export default function Users() {
 
   const getRoleIcon = (role) => {
     switch (role) {
-      case "admin": return "👑";
-      case "junk_shop_owner": return "🏪";
-      case "junkshop": return "🏪";
-      case "collector": return "🚚";
-      case "customer": return "👤";
-      case "resident": return "👤";
-      default: return "❓";
+      case "admin": return "";
+      case "junk_shop_owner": return "";
+      case "junkshop": return "";
+      case "collector": return "";
+      case "customer": return "";
+      case "resident": return "";
+      default: return "";
     }
   };
 
@@ -193,7 +193,7 @@ export default function Users() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold mb-2 text-white">
-                  User Management 👥
+                  User Management
                 </h1>
                 <p className="text-green-100">
                   Manage system users, roles, and permissions
@@ -313,20 +313,6 @@ export default function Users() {
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        <Select 
-                          value={user.isActive !== false ? "active" : "inactive"}
-                          onValueChange={(value) => handleStatusChange(user.id, value === "active")}
-                          data-testid={`select-status-${user.id}`}
-                        >
-                          <SelectTrigger className="w-[100px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="active">Active</SelectItem>
-                            <SelectItem value="inactive">Inactive</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button 

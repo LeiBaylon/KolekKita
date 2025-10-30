@@ -94,11 +94,19 @@ export default function Verification() {
     try {
       console.log('🔄 Starting verification status update:', {
         verificationId: verification.id,
+        verificationDocumentId: verification.id, // Explicit log
         currentStatus: verification.status,
         newStatus: status,
         userId: verification.userId,
-        documentType: verification.documentType
+        submittedBy: verification.submittedBy,
+        documentType: verification.documentType,
+        fullVerificationObject: verification // Log full object to debug
       });
+
+      // Validate that we have a verification ID
+      if (!verification.id) {
+        throw new Error('Verification ID is missing! Cannot update document.');
+      }
 
       const options = {
         adminNotes: verificationNotes || `Verification ${status} by admin`
@@ -109,13 +117,18 @@ export default function Verification() {
         options.rejectionReason = denialReason || verificationNotes || 'Rejected by admin';
       }
 
-      // Update using the verification service
+      console.log('📝 Update options:', options);
+      console.log('🎯 Targeting verification document ID:', verification.id);
+
+      // Update using the verification service - this updates the EXISTING document
       await VerificationService.updateVerificationStatus(
         verification.id, 
         status, 
         user?.uid || 'admin', // Use actual admin UID
         options
       );
+      
+      console.log('✅ Document updated successfully in Firebase. Document ID:', verification.id);
       
       // Send notification based on status
       if (status === VerificationStatuses.APPROVED) {
@@ -148,14 +161,19 @@ export default function Verification() {
       // Show success toast
       toast({
         title: "✅ Verification Updated",
-        description: `Verification successfully ${status === VerificationStatuses.APPROVED ? 'approved' : 'rejected'}! User has been notified.`,
+        description: `Verification document ${verification.id} successfully ${status === VerificationStatuses.APPROVED ? 'approved' : 'rejected'}! User has been notified.`,
         variant: status === VerificationStatuses.APPROVED ? "default" : "destructive",
       });
     } catch (error) {
-      console.error('Error updating verification:', error);
+      console.error('❌ Error updating verification:', error);
+      console.error('Failed verification details:', {
+        verificationId: verification?.id,
+        status,
+        error: error.message
+      });
       toast({
         title: "Update Failed",
-        description: `Failed to ${status} verification. Please try again.`,
+        description: `Failed to ${status} verification. Error: ${error.message}`,
         variant: "destructive",
       });
     }
@@ -172,7 +190,7 @@ export default function Verification() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold mb-2">
-                  Junk Shop Verification 🏪
+                  Junk Shop Verification
                 </h1>
                 <p className="text-green-100">
                   Review and verify junk shop document submissions

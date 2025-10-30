@@ -268,30 +268,61 @@ export default function Analytics() {
       .slice(-6); // Show last 6 months
   })();
 
-  // Material distribution - only show if we have actual completed bookings
+  // Material distribution - based on actual waste types from bookings
   const materialData = (() => {
     if (completedBookings.length === 0) return [];
     
-    // Base the material distribution on actual completed bookings count
-    const baseCount = completedBookings.length;
+    // Count actual waste types from completed bookings
+    const wasteTypeCounts = {};
     
-    const materials = [
-      { name: "Paper Waste", color: "#22c55e", basePercentage: 35 },
-      { name: "Metal Scraps", color: "#3b82f6", basePercentage: 23 },
-      { name: "Electronic Waste", color: "#f59e0b", basePercentage: 18 },
-      { name: "Plastic Items", color: "#ef4444", basePercentage: 15 },
-      { name: "Glass Materials", color: "#8b5cf6", basePercentage: 9 }
-    ];
-    
-    return materials.map((material) => {
-      const value = Math.floor((baseCount * material.basePercentage) / 100) || 1;
-      return {
-        name: material.name,
-        value,
-        color: material.color,
-        percentage: material.basePercentage
-      };
+    completedBookings.forEach(booking => {
+      if (booking.wasteType) {
+        const wasteType = booking.wasteType.toLowerCase();
+        wasteTypeCounts[wasteType] = (wasteTypeCounts[wasteType] || 0) + 1;
+      }
     });
+    
+    // Map waste types to display names and colors
+    const wasteTypeMapping = {
+      'paper': { name: "Paper Waste", color: "#22c55e" },
+      'metal': { name: "Metal Scraps", color: "#3b82f6" },
+      'metals': { name: "Metal Scraps", color: "#3b82f6" },
+      'electronic': { name: "Electronic Waste", color: "#f59e0b" },
+      'electronics': { name: "Electronic Waste", color: "#f59e0b" },
+      'plastic': { name: "Plastic Items", color: "#ef4444" },
+      'plastics': { name: "Plastic Items", color: "#ef4444" },
+      'glass': { name: "Glass Materials", color: "#8b5cf6" },
+      'cardboard': { name: "Paper Waste", color: "#22c55e" },
+      'aluminum': { name: "Metal Scraps", color: "#3b82f6" },
+      'steel': { name: "Metal Scraps", color: "#3b82f6" }
+    };
+    
+    // Aggregate counts by category
+    const categoryCounts = {};
+    
+    Object.entries(wasteTypeCounts).forEach(([type, count]) => {
+      const mapping = wasteTypeMapping[type] || { name: type.charAt(0).toUpperCase() + type.slice(1), color: "#6b7280" };
+      const categoryName = mapping.name;
+      
+      if (!categoryCounts[categoryName]) {
+        categoryCounts[categoryName] = {
+          name: categoryName,
+          value: 0,
+          color: mapping.color
+        };
+      }
+      categoryCounts[categoryName].value += count;
+    });
+    
+    // Convert to array and calculate percentages
+    const totalCount = Object.values(categoryCounts).reduce((sum, cat) => sum + cat.value, 0);
+    
+    return Object.values(categoryCounts)
+      .map(category => ({
+        ...category,
+        percentage: totalCount > 0 ? Math.round((category.value / totalCount) * 100) : 0
+      }))
+      .sort((a, b) => b.value - a.value); // Sort by count descending
   })();
 
   // Junk Shop Ratings - placeholder data structure for future implementation
@@ -332,7 +363,7 @@ export default function Analytics() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold mb-1">Platform Analytics 📊</h1>
+                <h1 className="text-2xl font-bold mb-1">Platform Analytics</h1>
                 <p className="text-green-100">Comprehensive insights and performance metrics</p>
               </div>
             </div>

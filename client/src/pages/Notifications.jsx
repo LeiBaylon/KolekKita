@@ -53,17 +53,17 @@ export default function Notifications() {
   // Helper function to get notification icon
   const getNotificationIcon = (type) => {
     const icons = {
-      system: "⚙️",
-      promotional: "📢",
-      update: "🔄",
-      reminder: "⏰",
-      announcement: "📢",
-      alert: "🚨",
-      booking: "📅",
-      transaction: "💰",
-      verification: "✅"
+      system: "",
+      promotional: "",
+      update: "",
+      reminder: "",
+      announcement: "",
+      alert: "",
+      booking: "",
+      transaction: "",
+      verification: ""
     };
-    return icons[type?.toLowerCase()] || "🔔";
+    return icons[type?.toLowerCase()] || "";
   };
 
   // Helper function to get badge color based on type
@@ -168,7 +168,7 @@ export default function Notifications() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold mb-2 text-white">
-                  Notifications 🔔
+                  Notifications
                 </h1>
                 <p className="text-green-100">
                   Manage and send notifications to users
@@ -371,26 +371,26 @@ export default function Notifications() {
                           {campaign.userBreakdown && (
                             <div>
                               <h4 className="font-semibold text-sm mb-3 flex items-center">
-                                👥 Recipient Breakdown
+                                Recipient Breakdown
                               </h4>
                               <div className="grid grid-cols-3 gap-3">
                                 <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
                                   <div className="text-xl font-bold text-green-600">
                                     {campaign.userBreakdown.junkShops || 0}
                                   </div>
-                                  <div className="text-xs text-green-600">🏪 Junk Shops</div>
+                                  <div className="text-xs text-green-600">Junk Shops</div>
                                 </div>
-                                <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-200">
-                                  <div className="text-xl font-bold text-orange-600">
+                                <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
+                                  <div className="text-xl font-bold text-green-600">
                                     {campaign.userBreakdown.collectors || 0}
                                   </div>
-                                  <div className="text-xs text-orange-600">🚚 Collectors</div>
+                                  <div className="text-xs text-green-600">Collectors</div>
                                 </div>
-                                <div className="text-center p-3 bg-purple-50 rounded-lg border border-purple-200">
-                                  <div className="text-xl font-bold text-purple-600">
+                                <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
+                                  <div className="text-xl font-bold text-green-600">
                                     {campaign.userBreakdown.residents || 0}
                                   </div>
-                                  <div className="text-xs text-purple-600">👤 Residents</div>
+                                  <div className="text-xs text-green-600">Residents</div>
                                 </div>
                               </div>
                             </div>
