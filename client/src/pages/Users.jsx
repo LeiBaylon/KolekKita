@@ -248,7 +248,7 @@ export default function Users() {
                   variant="secondary" 
                   size="sm" 
                   className="bg-white/20 text-white hover:bg-white/30"
-                  onClick={handleExportUsers}
+                  onClick={handleExportCSV}
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Export Data
