@@ -16,8 +16,6 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function Notifications() {
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
   const [isSendDialogOpen, setIsSendDialogOpen] = useState(false);
   const [notificationTitle, setNotificationTitle] = useState("");
   const [notificationMessage, setNotificationMessage] = useState("");
@@ -95,24 +93,8 @@ export default function Notifications() {
     return colors[type] || colors.system;
   };
 
-  // Filter campaigns
-  const filteredCampaigns = campaigns?.filter(campaign => {
-    // Filter by type
-    if (typeFilter !== 'all' && campaign.type !== typeFilter) return false;
-    
-    // Filter by search term
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      return (
-        campaign.title?.toLowerCase().includes(searchLower) ||
-        campaign.message?.toLowerCase().includes(searchLower) ||
-        campaign.type?.toLowerCase().includes(searchLower) ||
-        campaign.sentByName?.toLowerCase().includes(searchLower)
-      );
-    }
-    
-    return true;
-  }) || [];
+  // Display all campaigns without filtering
+  const filteredCampaigns = campaigns || [];
 
   // Calculate statistics
   const totalCampaigns = campaigns?.length || 0;
@@ -288,29 +270,6 @@ export default function Notifications() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <Input
-                  placeholder="Search notifications by title, message, type, or sender..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="Filter by type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  {Object.values(NotificationService.NotificationTypes).map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {getNotificationIcon(type)} {type.replace(/_/g, ' ')}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
             {error && (
               <div className="text-red-500 text-sm">
                 Error loading campaigns: {error}
@@ -361,9 +320,7 @@ export default function Notifications() {
                 <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No notifications found</p>
                 <p className="text-sm mt-2">
-                  {searchTerm ? 'Try adjusting your search criteria' : 
-                   typeFilter !== 'all' ? `No ${typeFilter} notifications have been sent yet.` : 
-                   "No notification campaigns have been sent yet."}
+                  No notification campaigns have been sent yet.
                 </p>
               </div>
             ) : (!loading && (
