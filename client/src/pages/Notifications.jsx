@@ -96,13 +96,6 @@ export default function Notifications() {
   // Display all campaigns without filtering
   const filteredCampaigns = campaigns || [];
 
-  // Calculate statistics
-  const totalCampaigns = campaigns?.length || 0;
-  const totalSent = campaigns?.reduce((sum, c) => sum + (c.actualSentCount || c.userBreakdown?.total || 0), 0) || 0;
-  const totalJunkShops = campaigns?.reduce((sum, c) => sum + (c.userBreakdown?.junkShops || 0), 0) || 0;
-  const totalCollectors = campaigns?.reduce((sum, c) => sum + (c.userBreakdown?.collectors || 0), 0) || 0;
-  const totalResidents = campaigns?.reduce((sum, c) => sum + (c.userBreakdown?.residents || 0), 0) || 0;
-
   // Handle sending notification
   const handleSendNotification = async () => {
     if (!notificationTitle.trim() || !notificationMessage.trim()) {
@@ -275,34 +268,6 @@ export default function Notifications() {
                 Error loading campaigns: {error}
               </div>
             )}
-
-            {/* Notification Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
-              <div className="text-center p-4 bg-white rounded-lg border-green-200 border">
-                <div className="text-2xl font-bold text-green-600">
-                  {totalCampaigns}
-                </div>
-                <div className="text-sm text-green-600">Total Campaigns</div>
-              </div>
-              <div className="text-center p-4 bg-white rounded-lg border-green-200 border">
-                <div className="text-2xl font-bold text-green-600">
-                  {totalSent}
-                </div>
-                <div className="text-sm text-green-600">Total Recipients</div>
-              </div>
-              <div className="text-center p-4 bg-white rounded-lg border-green-200 border">
-                <div className="text-2xl font-bold text-green-600">
-                  {totalJunkShops}
-                </div>
-                <div className="text-sm text-green-600">Junk Shops</div>
-              </div>
-              <div className="text-center p-4 bg-white rounded-lg border-green-200 border">
-                <div className="text-2xl font-bold text-green-600">
-                  {totalCollectors + totalResidents}
-                </div>
-                <div className="text-sm text-green-600">Active Users</div>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
