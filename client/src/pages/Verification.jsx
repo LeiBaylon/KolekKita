@@ -254,17 +254,6 @@ export default function Verification() {
                   <Download className="h-4 w-4 mr-2" />
                   Export Reports
                 </Button>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-48 bg-white/20 text-white border-white/30">
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Verifications ({allVerifications.length})</SelectItem>
-                    <SelectItem value="pending">Pending ({pendingJunkshops.length})</SelectItem>
-                    <SelectItem value="approved">Approved ({approvedJunkshops.length})</SelectItem>
-                    <SelectItem value="rejected">Rejected ({rejectedJunkshops.length})</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </div>
           </CardContent>
@@ -571,12 +560,9 @@ export default function Verification() {
               ) : (
                 <div className="text-center py-8 text-gray-600">
                   <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No {statusFilter === 'all' ? '' : statusFilter} verifications found</p>
+                  <p>No verifications found</p>
                   <p className="text-sm">
-                    {statusFilter === 'all' 
-                      ? 'Verification requests will appear here when submitted' 
-                      : `No ${statusFilter} verifications at this time`
-                    }
+                    Verification requests will appear here when submitted
                   </p>
                 </div>
               )}
