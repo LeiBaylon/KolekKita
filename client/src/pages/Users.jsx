@@ -17,8 +17,6 @@ import { cn } from "@/lib/utils";
 
 
 export default function Users() {
-  const [roleFilter, setRoleFilter] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
   const [showViewUserDialog, setShowViewUserDialog] = useState(false);
   const [showEditUserDialog, setShowEditUserDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -65,19 +63,6 @@ export default function Users() {
   const { data: allUsers, loading, error } = useFirestoreCollection(
     "users",
     constraints
-  );
-
-  // Client-side filtering for better control and reliability
-  const filteredUsersByRole = roleFilter === "all" 
-    ? allUsers 
-    : roleFilter === "junk_shop_owner"
-      ? allUsers.filter(user => user.role === "junk_shop_owner" || user.role === "junkshop")
-      : allUsers.filter(user => user.role === roleFilter);
-
-  const filteredUsers = filteredUsersByRole.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleStatusChange = async (userId, isActive) => {
@@ -165,17 +150,16 @@ export default function Users() {
     }
   };
 
-  const handleExportUsers = () => {
+  const handleExportCSV = () => {
     try {
-      // Prepare CSV data
-      const csvHeaders = ['Name', 'Email', 'Phone', 'Role', 'Status', 'Join Date'];
-      const csvData = filteredUsers.map(user => [
-        user.name,
-        user.email,
+      const csvHeaders = ['Name', 'Email', 'Role', 'Phone', 'Status', 'Created At'];
+      const csvData = allUsers.map(user => [
+        user.name || 'N/A',
+        user.email || 'N/A',
+        user.role || 'N/A',
         user.phone || 'N/A',
-        user.role,
         user.isActive !== false ? 'Active' : 'Inactive',
-        getValidDate(user.createdAt).toLocaleDateString('en-US')
+        getValidDate(user.createdAt).toLocaleString()
       ]);
 
       // Create CSV content
@@ -194,15 +178,17 @@ export default function Users() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      URL.revokeObjectURL(url);
 
       toast({
-        title: "Export successful",
-        description: `Exported ${filteredUsers.length} users to CSV file`,
+        title: "Success",
+        description: `Exported ${allUsers.length} users to CSV file`,
       });
     } catch (error) {
+      console.error('CSV Export Error:', error);
       toast({
-        title: "Export failed",
-        description: "Failed to export user data",
+        title: "Export Failed",
+        description: "Failed to export users data",
         variant: "destructive",
       });
     }
@@ -272,7 +258,7 @@ export default function Users() {
           </CardContent>
         </Card>
 
-        {/* Filters and Search */}
+        {/* User Directory */}
         <Card className="bg-white border border-gray-200">
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -281,29 +267,6 @@ export default function Users() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <Input
-                  placeholder="Search users by name, email, or role..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  data-testid="input-search-users"
-                />
-              </div>
-              <Select value={roleFilter} onValueChange={setRoleFilter} data-testid="select-role-filter">
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="Filter by role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="junk_shop_owner">Junk Shop</SelectItem>
-                  <SelectItem value="collector">Collector</SelectItem>
-                  <SelectItem value="resident">Resident</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
             {error && (
               <div className="text-red-500 text-sm" data-testid="text-users-error">
                 Error loading users: {error}
@@ -343,15 +306,14 @@ export default function Users() {
         {/* Users List */}
         <Card className="bg-white border border-gray-200">
           <CardContent className="p-0">
-            {filteredUsers.length === 0 ? (
+            {allUsers.length === 0 ? (
               <div className="text-center py-12 text-gray-500" data-testid="text-no-users">
                 <UsersIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No users found</p>
-                <p className="text-sm mt-2">Try adjusting your search or filter criteria</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-200">
-                {filteredUsers.map((user) => (
+                {allUsers.map((user) => (
                   <div 
                     key={user.id}
                     className="p-6 hover:bg-gray-50 transition-colors"

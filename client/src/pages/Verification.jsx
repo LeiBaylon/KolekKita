@@ -24,8 +24,6 @@ import { useAuth } from "@/contexts/AuthContext";
 export default function Verification() {
   const [selectedVerification, setSelectedVerification] = useState(null);
   const [verificationNotes, setVerificationNotes] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
   const [isDenyDialogOpen, setIsDenyDialogOpen] = useState(false);
   const [denialReason, setDenialReason] = useState("");
@@ -166,16 +164,8 @@ export default function Verification() {
   // Export Reports functionality
   const handleExportReports = () => {
     try {
-      // Get filtered verifications based on current status filter
-      let verificationsToExport = junkshopVerifications;
-      
-      if (statusFilter === 'pending') {
-        verificationsToExport = pendingJunkshops;
-      } else if (statusFilter === 'approved') {
-        verificationsToExport = approvedJunkshops;
-      } else if (statusFilter === 'rejected') {
-        verificationsToExport = rejectedJunkshops;
-      }
+      // Export all verifications
+      const verificationsToExport = junkshopVerifications;
 
       // Prepare CSV data
       const csvHeaders = [
@@ -220,8 +210,7 @@ export default function Verification() {
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
       
-      const filterSuffix = statusFilter === 'all' ? 'all' : statusFilter;
-      link.setAttribute('download', `junkshop-verifications-${filterSuffix}-${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute('download', `junkshop-verifications-all-${new Date().toISOString().split('T')[0]}.csv`);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
@@ -239,47 +228,6 @@ export default function Verification() {
       });
     }
   };
-
-  // Get filtered verifications based on status filter and search term
-  const getFilteredVerifications = () => {
-    let baseVerifications;
-    switch (statusFilter) {
-      case 'pending':
-        baseVerifications = pendingJunkshops;
-        break;
-      case 'approved':
-        baseVerifications = approvedJunkshops;
-        break;
-      case 'rejected':
-        baseVerifications = rejectedJunkshops;
-        break;
-      case 'all':
-      default:
-        baseVerifications = junkshopVerifications;
-        break;
-    }
-
-    // Apply search filter
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      return baseVerifications.filter(verification => 
-        verification.shopName?.toLowerCase().includes(searchLower) ||
-        verification.businessLicense?.toLowerCase().includes(searchLower) ||
-        verification.address?.toLowerCase().includes(searchLower) ||
-        verification.phoneNumber?.toLowerCase().includes(searchLower) ||
-        verification.userRole?.toLowerCase().includes(searchLower) ||
-        verification.documentType?.toLowerCase().includes(searchLower) ||
-        verification.userId?.toLowerCase().includes(searchLower) ||
-        verification.rejectionReason?.toLowerCase().includes(searchLower)
-      );
-    }
-
-    return baseVerifications;
-  };
-
-  const filteredVerifications = getFilteredVerifications();
-
-
 
   return (
     <Layout title="Junk Shop Verification">
@@ -331,28 +279,6 @@ export default function Verification() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <Input
-                  placeholder="Search by shop name, license, address, phone, user ID..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Verifications</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* Verification Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
               <div className="text-center p-4 bg-white rounded-lg border-green-200 border">
@@ -390,22 +316,14 @@ export default function Verification() {
         <Card className="bg-white border border-gray-200">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              {statusFilter === 'pending' && <Clock className="h-5 w-5 text-yellow-600" />}
-              {statusFilter === 'approved' && <CheckCircle className="h-5 w-5 text-green-600" />}
-              {statusFilter === 'rejected' && <XCircle className="h-5 w-5 text-red-600" />}
-              {statusFilter === 'all' && <Filter className="h-5 w-5 text-blue-600" />}
-              <span>
-                {statusFilter === 'all' && `All Verifications (${allVerifications.length}/${filteredVerifications.length})`}
-                {statusFilter === 'pending' && `Pending Verifications (${filteredVerifications.length})`}
-                {statusFilter === 'approved' && `Approved Verifications (${filteredVerifications.length})`}
-                {statusFilter === 'rejected' && `Rejected Verifications (${filteredVerifications.length})`}
-              </span>
+              <ShieldCheck className="h-5 w-5 text-green-600" />
+              <span>All Verifications ({allVerifications.length})</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {filteredVerifications.length > 0 ? (
-                filteredVerifications.map((verification) => (
+              {junkshopVerifications.length > 0 ? (
+                junkshopVerifications.map((verification) => (
                   <div 
                     key={verification.id} 
                     className={`rounded-lg p-6 ${
