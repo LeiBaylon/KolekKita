@@ -339,14 +339,10 @@ export default function Moderation() {
               <div className="text-center py-12 text-gray-600">
                 <ShieldCheck className="h-16 w-16 mx-auto mb-4" />
                 <p className="text-lg font-medium">
-                  {filterType === 'pending' && "No Pending Reports"}
-                  {filterType === 'resolved' && "No Resolved Reports"}
-                  {filterType === 'all' && "No Reports to Review"}
+                  No Reports to Review
                 </p>
                 <p className="text-sm">
-                  {filterType === 'pending' && "All reports have been reviewed"}
-                  {filterType === 'resolved' && "No reports have been resolved yet"}
-                  {filterType === 'all' && "All content is clean and compliant"}
+                  All content is clean and compliant
                 </p>
               </div>
             )}
