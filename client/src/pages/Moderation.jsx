@@ -6,12 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { useFirestoreCollection, useFirestoreOperations } from "@/hooks/useFirestore";
 import { useToast } from "@/hooks/use-toast";
 import { orderBy } from "firebase/firestore";
-import { AlertTriangle, Flag, MessageSquare, ShieldCheck, Eye, CheckCircle, XCircle, Clock, Search } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertTriangle, Flag, MessageSquare, ShieldCheck, Eye, CheckCircle, XCircle, Clock } from "lucide-react";
 
 
 export default function Moderation() {
@@ -263,7 +261,7 @@ export default function Moderation() {
         </Card>
 
         {/* Reports Queue */}
-        <Card className="bg-white border border-gray-200">
+        <Card className="bg-white">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span>All Reports Queue</span>
@@ -278,7 +276,7 @@ export default function Moderation() {
           <CardContent className="space-y-4">
             {reportQueue.length > 0 ? (
               reportQueue.map((report, index) => (
-                <div key={report.id} className="bg-white border border-gray-200 rounded-lg p-6">
+                <div key={report.id} className="bg-white rounded-lg p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-4">
                       <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
@@ -366,26 +364,26 @@ export default function Moderation() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-gray-600">Report Type</label>
-                    <div className="mt-1 p-3 bg-gray-50 rounded-md">
+                    <div className="mt-1 p-3">
                       {selectedReport.type}
                     </div>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Category</label>
-                    <div className="mt-1 p-3 bg-gray-50 rounded-md">
+                    <div className="mt-1 p-3">
                       {selectedReport.category}
                     </div>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Reported By</label>
-                    <div className="mt-1 p-3 bg-gray-50 rounded-md">
+                    <div className="mt-1 p-3">
                       {selectedReport.reportedBy}
                     </div>
                   </div>
                   {selectedReport.reportedUser && (
                     <div>
                       <label className="text-sm font-medium text-gray-600">Reported User</label>
-                      <div className="mt-1 p-3 bg-gray-50 rounded-md">
+                      <div className="mt-1 p-3">
                         {selectedReport.reportedUser}
                       </div>
                     </div>
@@ -394,7 +392,7 @@ export default function Moderation() {
                 
                 <div>
                   <label className="text-sm font-medium text-gray-600">Description</label>
-                  <div className="mt-1 p-3 bg-gray-50 rounded-md">
+                  <div className="mt-1 p-3">
                     {selectedReport.description}
                   </div>
                 </div>
@@ -402,7 +400,7 @@ export default function Moderation() {
                 {selectedReport.evidenceFiles && selectedReport.evidenceFiles.length > 0 && (
                   <div>
                     <label className="text-sm font-medium text-gray-600">Evidence Files</label>
-                    <div className="mt-1 p-3 bg-gray-50 rounded-md space-y-2">
+                    <div className="mt-1 p-3 space-y-2">
                       {selectedReport.evidenceFiles.map((file, index) => (
                         <div key={index} className="flex items-center space-x-2">
                           <span className="text-sm text-blue-600 underline">{file}</span>
@@ -414,7 +412,7 @@ export default function Moderation() {
                 
                 <div>
                   <label className="text-sm font-medium text-gray-600">Report Date</label>
-                  <div className="mt-1 p-3 bg-gray-50 rounded-md">
+                  <div className="mt-1 p-3">
                     {new Date(selectedReport.date).toLocaleString('en-US', {
                       year: 'numeric',
                       month: 'long',
@@ -425,7 +423,7 @@ export default function Moderation() {
                   </div>
                 </div>
                 
-                <div className="flex justify-end space-x-2 pt-4 border-t">
+                <div className="flex justify-end space-x-2 pt-4">
                   <Button variant="outline" onClick={() => setShowReviewDialog(false)}>
                     Close
                   </Button>
