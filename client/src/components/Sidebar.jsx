@@ -56,14 +56,14 @@ export const Sidebar = ({ isOpen, onClose }) => {
       {/* Sidebar */}
       <div
         className={cn(
-          "bg-white  shadow-lg w-64 fixed inset-y-0 left-0 transform transition-transform duration-300 ease-in-out z-30",
+          "bg-white w-64 fixed inset-y-0 left-0 z-30",
           "lg:translate-x-0 lg:static lg:inset-0",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
         data-testid="sidebar"
       >
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 ">
-          <h1 className="text-xl font-bold text-gray-800 " data-testid="sidebar-title">
+        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
+          <h1 className="text-xl font-bold text-gray-800" data-testid="sidebar-title">
             KolekKita
           </h1>
           <Button

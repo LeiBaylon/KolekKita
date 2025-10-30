@@ -188,7 +188,7 @@ export default function Notifications() {
     <Layout title="Notifications">
       <div className="space-y-6">
         {/* Header */}
-        <Card className="bg-gradient-to-r from-green-500 via-green-600 to-green-700 text-white">
+        <Card className="bg-green-600 text-white">
           <CardContent className="p-8">
             <div className="flex items-center justify-between">
               <div>
@@ -463,23 +463,23 @@ export default function Notifications() {
                                 👥 Recipient Breakdown
                               </h4>
                               <div className="grid grid-cols-3 gap-3">
-                                <div className="text-center p-3 bg-gradient-to-br from-green-50 to-green-100   rounded-lg border border-green-200 ">
-                                  <div className="text-xl font-bold text-green-600 ">
+                                <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
+                                  <div className="text-xl font-bold text-green-600">
                                     {campaign.userBreakdown.junkShops || 0}
                                   </div>
-                                  <div className="text-xs text-green-600 ">🏪 Junk Shops</div>
+                                  <div className="text-xs text-green-600">🏪 Junk Shops</div>
                                 </div>
-                                <div className="text-center p-3 bg-gradient-to-br from-orange-50 to-orange-100   rounded-lg border border-orange-200 ">
-                                  <div className="text-xl font-bold text-orange-600 ">
+                                <div className="text-center p-3 bg-orange-50 rounded-lg border border-orange-200">
+                                  <div className="text-xl font-bold text-orange-600">
                                     {campaign.userBreakdown.collectors || 0}
                                   </div>
-                                  <div className="text-xs text-orange-600 ">🚚 Collectors</div>
+                                  <div className="text-xs text-orange-600">🚚 Collectors</div>
                                 </div>
-                                <div className="text-center p-3 bg-gradient-to-br from-purple-50 to-purple-100   rounded-lg border border-purple-200 ">
-                                  <div className="text-xl font-bold text-purple-600 ">
+                                <div className="text-center p-3 bg-purple-50 rounded-lg border border-purple-200">
+                                  <div className="text-xl font-bold text-purple-600">
                                     {campaign.userBreakdown.residents || 0}
                                   </div>
-                                  <div className="text-xs text-purple-600 ">👤 Residents</div>
+                                  <div className="text-xs text-purple-600">👤 Residents</div>
                                 </div>
                               </div>
                             </div>

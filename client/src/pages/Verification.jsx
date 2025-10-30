@@ -285,7 +285,7 @@ export default function Verification() {
     <Layout title="Junk Shop Verification">
       <div className="space-y-8">
         {/* Hero Section */}
-        <Card className="bg-gradient-to-r from-green-500 via-green-600 to-green-700 text-white">
+        <Card className="bg-green-600 text-white">
           <CardContent className="p-8">
             <div className="flex items-center justify-between">
               <div>
