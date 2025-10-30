@@ -260,25 +260,6 @@ export default function Moderation() {
           </CardContent>
         </Card>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
-          <Card className="bg-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Pending Reports</p>
-                  <p className="text-3xl font-bold text-green-600 mt-2">
-                    {reportQueue.filter(r => r.status === 'pending' || !r.status).length}
-                  </p>
-                </div>
-                <div className="h-12 w-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <Clock className="h-6 w-6 text-orange-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Reports Queue */}
         <Card className="bg-white">
           <CardHeader>
