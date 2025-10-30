@@ -4,43 +4,49 @@
 
 /* Simple Plain Colors - No Gradients */
 .gradient-card {
-  background: #667eea;
+  background: #16a34a !important;
 }
 
 .gradient-orange {
-  background: #f5576c;
+  background: #16a34a !important;
 }
 
 .gradient-green {
-  background: #00f2fe;
+  background: #16a34a !important;
 }
 
 .gradient-purple {
-  background: #38f9d7;
+  background: #16a34a !important;
 }
 
 .gradient-pink {
-  background: #fa709a;
+  background: #16a34a !important;
 }
 
 .gradient-dashboard {
-  background: #667eea;
+  background: #16a34a !important;
 }
 
 .gradient-verification {
-  background: #f5576c;
+  background: #16a34a !important;
 }
 
 .gradient-moderation {
-  background: #00f2fe;
+  background: #16a34a !important;
 }
 
 .gradient-analytics {
-  background: #38f9d7;
+  background: #16a34a !important;
 }
 
 .gradient-system {
-  background: #fa709a;
+  background: #16a34a !important;
+}
+
+/* Ensure all green backgrounds are flat with no gradient effects */
+.bg-green-600 {
+  background-color: #16a34a !important;
+  background-image: none !important;
 }
 
 :root {

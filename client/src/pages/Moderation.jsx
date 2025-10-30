@@ -10,15 +10,11 @@ import { Input } from "@/components/ui/input";
 import { useFirestoreCollection, useFirestoreOperations } from "@/hooks/useFirestore";
 import { useToast } from "@/hooks/use-toast";
 import { orderBy } from "firebase/firestore";
-import { AlertTriangle, Flag, MessageSquare, ShieldCheck, Eye, CheckCircle, XCircle, Clock, Download, Calendar, Filter, ChevronDown, Search } from "lucide-react";
+import { AlertTriangle, Flag, MessageSquare, ShieldCheck, Eye, CheckCircle, XCircle, Clock, Search } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 
 export default function Moderation() {
-  const [filterType, setFilterType] = useState("all"); // New unified filter state
-  const [searchTerm, setSearchTerm] = useState("");
-  const [timePeriod, setTimePeriod] = useState("monthly"); // New time period state
-  const [statusFilter, setStatusFilter] = useState("pending"); // New status filter
   const [selectedReport, setSelectedReport] = useState(null);
   const [showReviewDialog, setShowReviewDialog] = useState(false);
   const [showActionDialog, setShowActionDialog] = useState(false);
@@ -63,57 +59,20 @@ export default function Moderation() {
     return new Date();
   };
 
-  // Helper function to filter data by time period
-  const filterByTimePeriod = (data) => {
-    const now = new Date();
-    const filtered = data.filter(item => {
-      const itemDate = getValidDate(item.createdAt);
-      
-      switch(timePeriod) {
-        case 'daily':
-          // Last 30 days
-          const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
-          return itemDate >= thirtyDaysAgo;
-        case 'weekly': 
-          // Last 12 weeks (84 days)
-          const twelveWeeksAgo = new Date(now.getTime() - (84 * 24 * 60 * 60 * 1000));
-          return itemDate >= twelveWeeksAgo;
-        case 'monthly':
-          // Last 12 months (365 days)
-          const twelveMonthsAgo = new Date(now.getTime() - (365 * 24 * 60 * 60 * 1000));
-          return itemDate >= twelveMonthsAgo;
-        case 'yearly':
-          // Last 5 years
-          const fiveYearsAgo = new Date(now.getTime() - (5 * 365 * 24 * 60 * 60 * 1000));
-          return itemDate >= fiveYearsAgo;
-        default:
-          return true;
-      }
-    });
-    
-    return filtered;
-  };
-  
   // Fetch data with proper ordering
   const { data: users } = useFirestoreCollection("users", [orderBy("createdAt", "desc")]);
   const { data: reviews } = useFirestoreCollection("reviews", [orderBy("createdAt", "desc")]);
   const { data: bookings } = useFirestoreCollection("bookings", [orderBy("createdAt", "desc")]);
   const { data: reports } = useFirestoreCollection("reports", [orderBy("createdAt", "desc")]);
   
-  // Apply time period filtering to all data
-  const filteredUsers = filterByTimePeriod(users);
-  const filteredReviews = filterByTimePeriod(reviews);
-  const filteredBookings = filterByTimePeriod(bookings);
-  const filteredReports = filterByTimePeriod(reports);
-  
-  // Real moderation statistics based on filtered data
-  const flaggedReviews = filteredReviews.filter(review => 
+  // Real moderation statistics based on data
+  const flaggedReviews = reviews.filter(review => 
     review.rating <= 2 || 
     (review.comment && review.comment.length < 10) ||
     (review.comment && /spam|fake|bot|test/i.test(review.comment))
   );
   
-  const suspiciousUsers = filteredUsers.filter(user => 
+  const suspiciousUsers = users.filter(user => 
     !user.email || 
     user.email.length < 5 || 
     !user.name || 
@@ -121,7 +80,7 @@ export default function Moderation() {
     /test|fake|spam/i.test(user.name || '')
   );
   
-  const problematicBookings = filteredBookings.filter(booking => 
+  const problematicBookings = bookings.filter(booking => 
     !booking.price || 
     parseFloat(booking.price) === 0 ||
     booking.status === 'cancelled' ||
@@ -129,10 +88,10 @@ export default function Moderation() {
     !booking.dropoffLocation
   );
   
-  // Generate comprehensive report queue from multiple sources with time filtering
+  // Generate comprehensive report queue from multiple sources
   const reportQueue = [
     // Direct reports from database
-    ...filteredReports.map(report => ({
+    ...reports.map(report => ({
       id: report.id,
       type: report.reportType || report.type || 'Content Violation',
       category: report.category || 'General',
@@ -192,105 +151,6 @@ export default function Moderation() {
     
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
-
-  // Function to get time period display text
-  const getTimePeriodText = () => {
-    switch(timePeriod) {
-      case 'daily': return 'Daily';
-      case 'weekly': return 'Weekly'; 
-      case 'monthly': return 'Monthly';
-      case 'yearly': return 'Yearly';
-      default: return 'Monthly';
-    }
-  };
-
-  // Function to get time period description
-  const getTimePeriodDescription = () => {
-    switch(timePeriod) {
-      case 'daily': return 'Last 30 days';
-      case 'weekly': return 'Last 12 weeks';
-      case 'monthly': return 'Last 12 months';
-      case 'yearly': return 'Last 5 years';
-      default: return 'Last 12 months';
-    }
-  };
-
-  // Handle time period change
-  const handleTimePeriodChange = (newPeriod) => {
-    setTimePeriod(newPeriod);
-    toast({
-      title: `Time Period: ${newPeriod.charAt(0).toUpperCase() + newPeriod.slice(1)}`,
-      description: `Showing moderation data for ${getTimePeriodDescription()}`,
-    });
-  };
-
-  // Export Reports functionality
-  const handleExportReports = () => {
-    try {
-      const reportsToExport = getDisplayedReports();
-
-      // Prepare CSV data
-      const csvHeaders = [
-        'Report ID',
-        'Type',
-        'Category', 
-        'Description',
-        'Reported By',
-        'Status',
-        'Date Reported',
-        'Action Taken'
-      ];
-      
-      const csvData = reportsToExport.map(report => [
-        report.id,
-        report.type,
-        report.category,
-        report.description,
-        report.reportedBy,
-        report.status,
-        new Date(report.date).toLocaleDateString('en-US'),
-        'Pending' // Action status will be updated when actions are taken
-      ]);
-
-      // Create CSV content
-      const csvContent = [
-        csvHeaders.join(','),
-        ...csvData.map(row => row.map(field => `"${field}"`).join(','))
-      ].join('\n');
-
-      // Create and download file
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      
-      const getFilterPrefix = () => {
-        switch(filterType) {
-          case 'pending': return 'pending-reports';
-          case 'resolved': return 'resolved-reports';
-          case 'priority': return 'priority-reports';
-          default: return 'moderation-reports';
-        }
-      };
-      
-      link.setAttribute('download', `${getFilterPrefix()}-${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      toast({
-        title: "Export successful",
-        description: `Exported ${reportsToExport.length} report records to CSV file`,
-      });
-    } catch (error) {
-      toast({
-        title: "Export failed",
-        description: "Failed to export moderation data",
-        variant: "destructive",
-      });
-    }
-  };
 
   // Handle review action
   const handleReviewReport = (report) => {
@@ -387,63 +247,6 @@ export default function Moderation() {
     }
   };
 
-  // Filter reports based on current view and search term
-  const getDisplayedReports = () => {
-    let baseReports;
-    
-    // First filter by status
-    if (statusFilter === 'pending') {
-      baseReports = reportQueue.filter(r => r.status === 'pending' || !r.status);
-    } else if (statusFilter === 'resolved') {
-      baseReports = reportQueue.filter(r => r.status === 'resolved');
-    } else {
-      baseReports = reportQueue; // all statuses
-    }
-    
-    // Then filter by type
-    switch(filterType) {
-      case 'pending':
-        baseReports = baseReports.filter(r => r.status === 'pending' || !r.status);
-        break;
-      case 'resolved':
-        baseReports = baseReports.filter(r => r.status === 'resolved');
-        break;
-      default:
-        // baseReports already filtered by status above
-        break;
-    }
-
-    // Apply search filter
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      return baseReports.filter(report => 
-        report.title?.toLowerCase().includes(searchLower) ||
-        report.description?.toLowerCase().includes(searchLower) ||
-        report.reportType?.toLowerCase().includes(searchLower) ||
-        report.reportedBy?.toLowerCase().includes(searchLower) ||
-        report.targetId?.toLowerCase().includes(searchLower) ||
-        report.category?.toLowerCase().includes(searchLower) ||
-        report.notes?.toLowerCase().includes(searchLower)
-      );
-    }
-
-    return baseReports;
-  };
-
-  const displayedReports = getDisplayedReports();
-
-  // Get filter display info
-  const getFilterInfo = () => {
-    switch(filterType) {
-      case 'pending': return { title: 'Pending Reports', description: 'Reports waiting for admin review and action' };
-      case 'resolved': return { title: 'Resolved Reports', description: 'Reports that have been resolved' };
-      case 'priority': return { title: 'Priority Reports', description: 'High and medium priority reports' };
-      default: return { title: 'All Reports Queue', description: 'Review and moderate flagged content' };
-    }
-  };
-
-  const filterInfo = getFilterInfo();
-
   return (
     <Layout title="Content Moderation">
       <div className="space-y-8">
@@ -455,190 +258,6 @@ export default function Moderation() {
                 <h1 className="text-3xl font-bold mb-2">Content Moderation 🛡️</h1>
                 <p className="text-green-100">Review reports, reviews, and manage platform content</p>
               </div>
-              <div className="flex items-center space-x-4">
-                <Button 
-                  variant="secondary" 
-                  size="sm" 
-                  className="bg-white/20 text-white hover:bg-white/30"
-                  onClick={handleExportReports}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Reports
-                </Button>
-
-                {/* Time Period Selector */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="secondary"
-                      size="sm"
-                      className="bg-white/20 text-white hover:bg-white/30"
-                    >
-                      <Calendar className="h-4 w-4 mr-2" />
-                      {getTimePeriodText()}
-                      <ChevronDown className="h-4 w-4 ml-2" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem 
-                      onClick={() => handleTimePeriodChange('daily')}
-                      className={timePeriod === 'daily' ? 'bg-gray-50' : ''}
-                    >
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Daily (Last 30 days)
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handleTimePeriodChange('weekly')}
-                      className={timePeriod === 'weekly' ? 'bg-gray-50' : ''}
-                    >
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Weekly (Last 12 weeks)
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handleTimePeriodChange('monthly')}
-                      className={timePeriod === 'monthly' ? 'bg-gray-50' : ''}
-                    >
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Monthly (Last 12 months)
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => handleTimePeriodChange('yearly')}
-                      className={timePeriod === 'yearly' ? 'bg-gray-50' : ''}
-                    >
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Yearly (Last 5 years)
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="secondary"
-                      size="sm"
-                      className="bg-white/20 text-white hover:bg-white/30"
-                    >
-                      <Filter className="h-4 w-4 mr-2" />
-                      {filterType === 'all' ? 'All Reports' : 
-                       filterType === 'pending' ? 'View Pending' :
-                       filterType === 'resolved' ? 'View Resolved' : 'All Reports'}
-                      <ChevronDown className="h-4 w-4 ml-2" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem 
-                      onClick={() => {
-                        setFilterType('all');
-                        toast({
-                          title: "All Reports",
-                          description: `Showing all ${reportQueue.length} reports for ${getTimePeriodDescription()}`
-                        });
-                      }}
-                      className={filterType === 'all' ? 'bg-gray-50' : ''}
-                    >
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      All Reports
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => {
-                        setFilterType('pending');
-                        const pendingCount = reportQueue.filter(r => r.status === 'pending' || !r.status).length;
-                        toast({
-                          title: "Pending Reports",
-                          description: `Showing ${pendingCount} pending reports for ${getTimePeriodDescription()}`
-                        });
-                      }}
-                      className={filterType === 'pending' ? 'bg-gray-50' : ''}
-                    >
-                      <Clock className="h-4 w-4 mr-2" />
-                      View Pending
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => {
-                        setFilterType('resolved');
-                        const resolvedCount = reportQueue.filter(r => r.status === 'resolved').length;
-                        toast({
-                          title: "Resolved Reports",
-                          description: `Showing ${resolvedCount} resolved reports for ${getTimePeriodDescription()}`
-                        });
-                      }}
-                      className={filterType === 'resolved' ? 'bg-gray-50' : ''}
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      View Resolved
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Search and Filters */}
-        <Card className="bg-white border border-gray-200">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center">
-                <Flag className="h-5 w-5 mr-2" />
-                Moderation Directory
-              </div>
-              <div className="text-sm text-gray-600">
-                {getTimePeriodDescription()}
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <Input
-                  placeholder="Search by title, description, reporter, category, type..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-[150px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="resolved">Resolved</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-full sm:w-[150px]">
-                  <SelectValue placeholder="Type Filter" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="pending">Pending Only</SelectItem>
-                  <SelectItem value="resolved">Resolved Only</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Quick Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
-              <div className="text-center p-3 bg-white rounded-lg border-green-200 border">
-                <div className="text-lg font-bold text-green-600">
-                  {reportQueue.filter(r => r.status === 'pending' || !r.status).length}
-                </div>
-                <div className="text-xs text-green-600">Pending</div>
-              </div>
-              <div className="text-center p-3 bg-white rounded-lg border-green-200 border">
-                <div className="text-lg font-bold text-green-600">
-                  {reportQueue.filter(r => r.status === 'resolved').length}
-                </div>
-                <div className="text-xs text-green-600">Resolved</div>
-              </div>
-              <div className="text-center p-3 bg-white rounded-lg border-green-200 border">
-                <div className="text-lg font-bold text-green-600">
-                  {displayedReports.length}
-                </div>
-                <div className="text-xs text-green-600">Filtered Results</div>
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -647,18 +266,18 @@ export default function Moderation() {
         <Card className="bg-white border border-gray-200">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>{filterInfo.title}</span>
+              <span>All Reports Queue</span>
               <Badge variant="outline">
-                {displayedReports.length} {displayedReports.length === 1 ? 'Report' : 'Reports'}
+                {reportQueue.length} {reportQueue.length === 1 ? 'Report' : 'Reports'}
               </Badge>
             </CardTitle>
             <p className="text-sm text-gray-600">
-              {filterInfo.description}
+              Review and moderate flagged content
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
-            {displayedReports.length > 0 ? (
-              displayedReports.map((report, index) => (
+            {reportQueue.length > 0 ? (
+              reportQueue.map((report, index) => (
                 <div key={report.id} className="bg-white border border-gray-200 rounded-lg p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-4">

@@ -12,7 +12,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useFirestoreCollection, useFirestoreOperations } from "@/hooks/useFirestore";
 import { useToast } from "@/hooks/use-toast";
 import { orderBy, where } from "firebase/firestore";
-import { Users as UsersIcon, Mail, Phone, Shield, MoreVertical, Download, Calendar, Edit, Trash2, Eye } from "lucide-react";
+import { Users as UsersIcon, Mail, Phone, Shield, MoreVertical, Calendar, Edit, Trash2, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 
@@ -150,50 +150,6 @@ export default function Users() {
     }
   };
 
-  const handleExportCSV = () => {
-    try {
-      const csvHeaders = ['Name', 'Email', 'Role', 'Phone', 'Status', 'Created At'];
-      const csvData = allUsers.map(user => [
-        user.name || 'N/A',
-        user.email || 'N/A',
-        user.role || 'N/A',
-        user.phone || 'N/A',
-        user.isActive !== false ? 'Active' : 'Inactive',
-        getValidDate(user.createdAt).toLocaleString()
-      ]);
-
-      // Create CSV content
-      const csvContent = [
-        csvHeaders.join(','),
-        ...csvData.map(row => row.map(field => `"${field}"`).join(','))
-      ].join('\n');
-
-      // Create and download file
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `users-export-${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      toast({
-        title: "Success",
-        description: `Exported ${allUsers.length} users to CSV file`,
-      });
-    } catch (error) {
-      console.error('CSV Export Error:', error);
-      toast({
-        title: "Export Failed",
-        description: "Failed to export users data",
-        variant: "destructive",
-      });
-    }
-  };
-
   const getRoleBadgeVariant = (role) => {
     switch (role) {
       case "admin": return "default";
@@ -242,17 +198,6 @@ export default function Users() {
                 <p className="text-green-100">
                   Manage system users, roles, and permissions
                 </p>
-              </div>
-              <div className="flex items-center space-x-3">
-                <Button 
-                  variant="secondary" 
-                  size="sm" 
-                  className="bg-white/20 text-white hover:bg-white/30"
-                  onClick={handleExportCSV}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Data
-                </Button>
               </div>
             </div>
           </CardContent>

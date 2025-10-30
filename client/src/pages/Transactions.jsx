@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useFirestoreCollection } from "@/hooks/useFirestore";
 import { orderBy, where, limit } from "firebase/firestore";
-import { History, DollarSign, Download, Calendar, CreditCard } from "lucide-react";
+import { History, DollarSign, Calendar, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 
@@ -89,10 +89,6 @@ export default function Transactions() {
               View and manage completed bookings and revenue
             </p>
           </div>
-          <Button className="flex items-center space-x-2" data-testid="button-export-transactions">
-            <Download className="h-4 w-4" />
-            <span>Export</span>
-          </Button>
         </div>
 
         {/* Statistics Cards */}

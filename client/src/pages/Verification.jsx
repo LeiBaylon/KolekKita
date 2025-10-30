@@ -14,7 +14,7 @@ import { orderBy } from "firebase/firestore";
 import VerificationService, { useVerifications } from "@/services/verificationService";
 import NotificationService from "@/services/notificationService";
 import { VerificationStatuses, DocumentTypes } from "@shared/schema";
-import { CheckCircle, XCircle, Clock, ShieldCheck, Phone, Mail, Calendar, Building2, MapPin, FileText, Filter, Download, Search } from "lucide-react";
+import { CheckCircle, XCircle, Clock, ShieldCheck, Phone, Mail, Calendar, Building2, MapPin, FileText, Filter, Search } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 
@@ -161,73 +161,7 @@ export default function Verification() {
     }
   };
 
-  // Export Reports functionality
-  const handleExportReports = () => {
-    try {
-      // Export all verifications
-      const verificationsToExport = junkshopVerifications;
-
-      // Prepare CSV data
-      const csvHeaders = [
-        'Verification ID', 
-        'User ID', 
-        'Document Type', 
-        'Status', 
-        'User Role',
-        'Submission Date', 
-        'Reviewed By', 
-        'Review Date',
-        'Rejection Reason',
-        'Admin Notes'
-      ];
-      
-      const csvData = verificationsToExport.map(verification => [
-        verification.id || 'N/A',
-        verification.userId || 'N/A',
-        verification.documentType || 'N/A',
-        verification.status || 'pending',
-        verification.userRole || 'N/A',
-        verification.metadata?.submissionTimestamp 
-          ? getValidDate(verification.metadata.submissionTimestamp).toLocaleDateString('en-US')
-          : verification.createdAt 
-            ? getValidDate(verification.createdAt).toLocaleDateString('en-US')
-            : 'N/A',
-        verification.reviewedBy || 'N/A',
-        verification.reviewedAt ? getValidDate(verification.reviewedAt).toLocaleDateString('en-US') : 'N/A',
-        verification.rejectionReason || 'N/A',
-        verification.adminNotes || 'N/A'
-      ]);
-
-      // Create CSV content
-      const csvContent = [
-        csvHeaders.join(','),
-        ...csvData.map(row => row.map(field => `"${field}"`).join(','))
-      ].join('\n');
-
-      // Create and download file
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      
-      link.setAttribute('download', `junkshop-verifications-all-${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      toast({
-        title: "Export successful",
-        description: `Exported ${verificationsToExport.length} verification records to CSV file`,
-      });
-    } catch (error) {
-      toast({
-        title: "Export failed",
-        description: "Failed to export verification data",
-        variant: "destructive",
-      });
-    }
-  };
+  // Handle view documents
 
   return (
     <Layout title="Junk Shop Verification">
@@ -243,17 +177,6 @@ export default function Verification() {
                 <p className="text-green-100">
                   Review and verify junk shop document submissions
                 </p>
-              </div>
-              <div className="flex items-center space-x-4">
-                <Button 
-                  variant="secondary" 
-                  size="sm" 
-                  className="bg-white/20 text-white hover:bg-white/30"
-                  onClick={handleExportReports}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Reports
-                </Button>
               </div>
             </div>
           </CardContent>

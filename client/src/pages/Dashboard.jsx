@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useFirestoreCollection } from "@/hooks/useFirestore";
 import { useToast } from "@/hooks/use-toast";
 import { orderBy } from "firebase/firestore";
-import { Users, CheckCircle, Shield, BarChart3, Download, Calendar, ChevronDown, ChevronUp } from "lucide-react";
+import { Users, CheckCircle, Shield, BarChart3, Calendar, ChevronDown, ChevronUp } from "lucide-react";
 import { Link } from "wouter";
 
 
@@ -154,22 +154,6 @@ export default function Dashboard() {
                 <p className="text-green-100">
                   Platform management and oversight center
                 </p>
-              </div>
-              <div className="flex items-center space-x-3">
-                <Button 
-                  variant="secondary" 
-                  size="sm" 
-                  className="bg-white/20 text-white hover:bg-white/30"
-                  onClick={() => {
-                    toast({
-                      title: "Export Complete",
-                      description: "Dashboard data exported successfully"
-                    });
-                  }}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Report
-                </Button>
               </div>
             </div>
           </CardContent>

@@ -8,8 +8,7 @@ import { useFirestoreCollection } from "@/hooks/useFirestore";
 import { useToast } from "@/hooks/use-toast";
 import { orderBy } from "firebase/firestore";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { TrendingUp, Users, Activity, ArrowUpIcon, Package, Recycle, Download, Calendar, BarChart3, PieChart as PieChartIcon, TrendingDown, ChevronDown, Star } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { TrendingUp, Users, Activity, ArrowUpIcon, Package, Recycle, Calendar, BarChart3, PieChart as PieChartIcon, TrendingDown, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Analytics() {
@@ -329,94 +328,12 @@ export default function Analytics() {
     <Layout title="Platform Analytics">
       <div className="space-y-6">
         {/* Hero Section */}
-        <Card className="bg-gradient-to-r from-green-500 via-green-600 to-green-700 text-white">
+        <Card className="bg-green-600 text-white">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-bold mb-1">Platform Analytics 📊</h1>
                 <p className="text-green-100">Comprehensive insights and performance metrics</p>
-              </div>
-              <div className="flex items-center space-x-3">
-                <Button 
-                  variant="secondary" 
-                  size="sm" 
-                  className="bg-white/20 text-white hover:bg-white/30"
-                  onClick={() => {
-                    toast({
-                      title: "Export Report",
-                      description: "Analytics data has been exported to CSV file"
-                    });
-                  }}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Report
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button 
-                      size="sm" 
-                      className="bg-white/20 text-white hover:bg-white/30"
-                    >
-                      <Calendar className="h-4 w-4 mr-2" />
-                      {timeView.charAt(0).toUpperCase() + timeView.slice(1)}
-                      <ChevronDown className="h-4 w-4 ml-2" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem 
-                      onClick={() => {
-                        setTimeView('daily');
-                        toast({
-                          title: "Time Period: Daily",
-                          description: "Showing analytics for last 30 days"
-                        });
-                      }}
-                      className={timeView === 'daily' ? 'bg-gray-50' : ''}
-                    >
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Daily (Last 30 days)
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => {
-                        setTimeView('weekly');
-                        toast({
-                          title: "Time Period: Weekly",
-                          description: "Showing analytics for last 12 weeks"
-                        });
-                      }}
-                      className={timeView === 'weekly' ? 'bg-gray-50' : ''}
-                    >
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Weekly (Last 12 weeks)
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => {
-                        setTimeView('monthly');
-                        toast({
-                          title: "Time Period: Monthly",
-                          description: "Showing analytics for last 12 months"
-                        });
-                      }}
-                      className={timeView === 'monthly' ? 'bg-gray-50' : ''}
-                    >
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Monthly (Last 12 months)
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => {
-                        setTimeView('yearly');
-                        toast({
-                          title: "Time Period: Yearly", 
-                          description: "Showing analytics for last 5 years"
-                        });
-                      }}
-                      className={timeView === 'yearly' ? 'bg-gray-50' : ''}
-                    >
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Yearly (Last 5 years)
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
               </div>
             </div>
           </CardContent>
@@ -620,7 +537,7 @@ export default function Analytics() {
                   {junkShopRatings.length > 0 ? (
                     <>
                       {/* Average Rating Display */}
-                      <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-lg border border-yellow-200">
+                      <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-gray-600">Average Rating</p>
