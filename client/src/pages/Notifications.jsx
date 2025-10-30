@@ -254,26 +254,15 @@ export default function Notifications() {
           </CardContent>
         </Card>
 
-        {/* Filters and Search */}
-        <Card className="bg-white border border-gray-200">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Bell className="h-5 w-5 mr-2" />
-              Notification Directory
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {error && (
-              <div className="text-red-500 text-sm">
-                Error loading campaigns: {error}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
         {/* Notification Campaigns List */}
         <Card className="bg-white border border-gray-200">
           <CardContent className="p-0">
+            {error && (
+              <div className="text-red-500 text-sm p-6">
+                Error loading campaigns: {error}
+              </div>
+            )}
+            
             {loading && (
               <div className="flex justify-center py-12">
                 <LoadingSpinner size="lg" />
