@@ -39,6 +39,7 @@ export default function NewBooking() {
         dropoffLocation: formData.dropoffLocation || "Recycling Center",
         scheduledTime: formData.scheduledTime ? new Date(formData.scheduledTime) : null,
         notes: `${formData.materialType ? `Material: ${formData.materialType}. ` : ''}${formData.estimatedWeight ? `Estimated weight: ${formData.estimatedWeight}kg. ` : ''}${formData.notes}`,
+        estimatedWeight: formData.estimatedWeight ? parseFloat(formData.estimatedWeight) : 0,
         status: "pending",
         photos: [],
       };

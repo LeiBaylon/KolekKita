@@ -98,6 +98,7 @@ export const initializeFirebaseData = async (currentUserId) => {
         scheduledTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
         status: "pending",
         notes: "Material: Electronics. Estimated weight: 15kg. Old laptop and printer",
+        estimatedWeight: 15,
         photos: [],
         pickupCoords: { latitude: -6.2088, longitude: 106.8456 },
         dropoffCoords: { latitude: -6.1751, longitude: 106.8650 },
@@ -114,6 +115,7 @@ export const initializeFirebaseData = async (currentUserId) => {
         scheduledTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // Day after tomorrow
         status: "assigned",
         notes: "Material: Paper & Cardboard. Estimated weight: 25kg. Newspaper and cardboard boxes",
+        estimatedWeight: 25,
         photos: [],
         pickupCoords: { latitude: -6.1944, longitude: 106.8229 },
         dropoffCoords: { latitude: -6.1751, longitude: 106.8650 },
@@ -130,6 +132,7 @@ export const initializeFirebaseData = async (currentUserId) => {
         scheduledTime: new Date(Date.now() - 24 * 60 * 60 * 1000), // Yesterday
         status: "completed",
         notes: "Material: Mixed metals. Estimated weight: 20kg. Old furniture and appliances",
+        estimatedWeight: 20,
         photos: [],
         pickupCoords: { latitude: -6.2297, longitude: 106.8253 },
         dropoffCoords: { latitude: -6.1751, longitude: 106.8650 },
@@ -146,6 +149,7 @@ export const initializeFirebaseData = async (currentUserId) => {
         scheduledTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
         status: "pending",
         notes: "Material: Plastic containers. Estimated weight: 10kg",
+        estimatedWeight: 10,
         photos: [],
         pickupCoords: { latitude: -6.2297, longitude: 106.8253 },
         dropoffCoords: { latitude: -6.1751, longitude: 106.8650 },
