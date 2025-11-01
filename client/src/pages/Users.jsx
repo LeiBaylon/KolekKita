@@ -3,8 +3,6 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -12,22 +10,14 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useFirestoreCollection, useFirestoreOperations } from "@/hooks/useFirestore";
 import { useToast } from "@/hooks/use-toast";
 import { orderBy, where } from "firebase/firestore";
-import { Users as UsersIcon, Mail, Phone, Shield, MoreVertical, Calendar, Edit, Trash2, Eye } from "lucide-react";
+import { Users as UsersIcon, Mail, Phone, Shield, MoreVertical, Calendar, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 
 export default function Users() {
   const [showViewUserDialog, setShowViewUserDialog] = useState(false);
-  const [showEditUserDialog, setShowEditUserDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [editFormData, setEditFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    role: ""
-  });
   const { toast } = useToast();
-  const { updateDocument, deleteDocument } = useFirestoreOperations("users");
 
   // Helper function to safely convert timestamps to Date objects (same as Dashboard)
   const getValidDate = (timestamp) => {
@@ -65,89 +55,9 @@ export default function Users() {
     constraints
   );
 
-  const handleStatusChange = async (userId, isActive) => {
-    try {
-      console.log(`Updating user ${userId} status to ${isActive}`);
-      await updateDocument(userId, { 
-        isActive,
-        updatedAt: new Date()
-      });
-      toast({
-        title: "Status updated",
-        description: `User ${isActive ? 'activated' : 'deactivated'} successfully`,
-      });
-    } catch (error) {
-      console.error("Error updating user status:", error);
-      toast({
-        title: "Update failed",
-        description: "Failed to update user status. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteUser = async (userId, userName) => {
-    if (!confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) {
-      return;
-    }
-    
-    try {
-      await deleteDocument(userId);
-      toast({
-        title: "User deleted",
-        description: `${userName} has been removed from the system`,
-      });
-    } catch (error) {
-      toast({
-        title: "Delete failed",
-        description: "Failed to delete user",
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleViewUser = (user) => {
     setSelectedUser(user);
     setShowViewUserDialog(true);
-  };
-
-  const handleEditUser = (user) => {
-    setSelectedUser(user);
-    setEditFormData({
-      name: user.name,
-      email: user.email,
-      phone: user.phone || "",
-      role: user.role
-    });
-    setShowEditUserDialog(true);
-  };
-
-  const handleUpdateUser = async () => {
-    if (!selectedUser) return;
-    
-    try {
-      await updateDocument(selectedUser.id, {
-        name: editFormData.name,
-        email: editFormData.email,
-        phone: editFormData.phone,
-        role: editFormData.role,
-        updatedAt: new Date()
-      });
-      
-      toast({
-        title: "User updated",
-        description: "User information has been successfully updated",
-      });
-      
-      setShowEditUserDialog(false);
-      setSelectedUser(null);
-    } catch (error) {
-      toast({
-        title: "Update failed",
-        description: "Failed to update user information",
-        variant: "destructive",
-      });
-    }
   };
 
   const getRoleBadgeVariant = (role) => {
@@ -322,17 +232,6 @@ export default function Users() {
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleEditUser(user)}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit User
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => handleDeleteUser(user.id, user.name)}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete User
-                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -405,84 +304,13 @@ export default function Users() {
                   </div>
                 </div>
                 
-                <div className="flex justify-end space-x-2 pt-4 border-t">
+                <div className="flex justify-end pt-4 border-t">
                   <Button variant="outline" onClick={() => setShowViewUserDialog(false)}>
                     Close
-                  </Button>
-                  <Button onClick={() => {
-                    setShowViewUserDialog(false);
-                    handleEditUser(selectedUser);
-                  }}>
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit User
                   </Button>
                 </div>
               </div>
             )}
-          </DialogContent>
-        </Dialog>
-
-        {/* Edit User Dialog */}
-        <Dialog open={showEditUserDialog} onOpenChange={setShowEditUserDialog}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Edit User</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Name</label>
-                <Input
-                  value={editFormData.name}
-                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                  placeholder="User name"
-                />
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium">Email</label>
-                <Input
-                  type="email"
-                  value={editFormData.email}
-                  onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-                  placeholder="User email"
-                />
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium">Phone</label>
-                <Input
-                  value={editFormData.phone}
-                  onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
-                  placeholder="Phone number (optional)"
-                />
-              </div>
-              
-              <div>
-                <label className="text-sm font-medium">Role</label>
-                <Select value={editFormData.role} onValueChange={(value) => setEditFormData({ ...editFormData, role: value })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="junk_shop_owner">Junk Shop Owner</SelectItem>
-                    <SelectItem value="collector">Collector</SelectItem>
-                    <SelectItem value="customer">Customer</SelectItem>
-                    <SelectItem value="resident">Resident</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="flex space-x-2 pt-4">
-                <Button onClick={handleUpdateUser} className="flex-1">
-                  <Edit className="h-4 w-4 mr-2" />
-                  Update User
-                </Button>
-                <Button variant="outline" onClick={() => setShowEditUserDialog(false)}>
-                  Cancel
-                </Button>
-              </div>
-            </div>
           </DialogContent>
         </Dialog>
       </div>
