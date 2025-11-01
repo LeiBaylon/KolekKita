@@ -5,12 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useFirestoreCollection, useFirestoreOperations } from "@/hooks/useFirestore";
 import { useToast } from "@/hooks/use-toast";
 import { orderBy, where } from "firebase/firestore";
-import { Users as UsersIcon, Mail, Phone, Shield, MoreVertical, Calendar, Eye } from "lucide-react";
+import { Users as UsersIcon, Mail, Phone, Shield, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 
@@ -216,24 +215,15 @@ export default function Users() {
                         </div>
                       </div>
 
-                      <div className="flex items-center space-x-2">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              data-testid={`button-more-${user.id}`}
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleViewUser(user)}>
-                              <Eye className="h-4 w-4 mr-2" />
-                              View Details
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                      <div className="flex items-center">
+                        <Button
+                          variant="ghost"
+                          onClick={() => handleViewUser(user)}
+                          className="text-gray-900 hover:bg-gray-100"
+                          data-testid={`button-view-${user.id}`}
+                        >
+                          View Details
+                        </Button>
                       </div>
                     </div>
                   </div>
