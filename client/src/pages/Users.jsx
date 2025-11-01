@@ -281,12 +281,6 @@ export default function Users() {
                             <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs">
                               {getRoleIcon(user.role)} {user.role}
                             </Badge>
-                            <Badge 
-                              variant={user.isActive !== false ? "default" : "secondary"}
-                              className="text-xs"
-                            >
-                              {user.isActive !== false ? "Active" : "Inactive"}
-                            </Badge>
                           </div>
                           
                           <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600">
@@ -371,9 +365,6 @@ export default function Users() {
                       <Badge variant={getRoleBadgeVariant(selectedUser.role)}>
                         {getRoleIcon(selectedUser.role)} {selectedUser.role}
                       </Badge>
-                      <Badge variant={selectedUser.isActive !== false ? "default" : "secondary"}>
-                        {selectedUser.isActive !== false ? "Active" : "Inactive"}
-                      </Badge>
                     </div>
                   </div>
                 </div>
@@ -406,10 +397,6 @@ export default function Users() {
                           day: 'numeric'
                         })}
                       </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">Status</label>
-                      <p className="text-sm">{selectedUser.isActive !== false ? "Active User" : "Inactive User"}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-600">User ID</label>
