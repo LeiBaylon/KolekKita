@@ -22,7 +22,7 @@ export default function Moderation() {
   // Action-specific settings
   const [suspensionDuration, setSuspensionDuration] = useState("7");
   const [warningLevel, setWarningLevel] = useState("minor");
-  const [contentType, setContentType] = useState("post");
+  const [contentType, setContentType] = useState("profile");
   const [banReason, setBanReason] = useState("violation");
   
   const { toast } = useToast();
@@ -229,7 +229,7 @@ export default function Moderation() {
       setActionNotes("");
       setSuspensionDuration("7");
       setWarningLevel("minor");
-      setContentType("post");
+      setContentType("profile");
       setBanReason("violation");
       
       // Force refresh of reports data
@@ -472,7 +472,6 @@ export default function Moderation() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="post">Post/Comment</SelectItem>
                       <SelectItem value="profile">Profile Information</SelectItem>
                       <SelectItem value="media">Media/Images</SelectItem>
                       <SelectItem value="review">User Review</SelectItem>
