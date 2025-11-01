@@ -56,17 +56,19 @@ export default function Analytics() {
   const junkShopOwners = users.filter(u => u.role === "junk_shop_owner" || u.role === "junkshop");
   const collectors = users.filter(u => u.role === "collector");
   
-  // Calculate total weight based on actual completed bookings (realistic average per booking)
-  // Calculate total weight from actual estimatedWeight field in completed bookings
-  const totalWeight = completedBookings.reduce((sum, booking) => {
+  // Calculate total weight from actual estimatedWeight field in ALL bookings (not just completed)
+  const totalWeight = bookings.reduce((sum, booking) => {
     const weight = parseFloat(booking.estimatedWeight) || 0;
+    console.log('Booking:', booking.id, 'Weight:', weight, 'Status:', booking.status);
     return sum + weight;
   }, 0);
   
   // Calculate average weight per booking
-  const averageWeightPerBooking = completedBookings.length > 0 
-    ? Math.round(totalWeight / completedBookings.length) 
+  const averageWeightPerBooking = bookings.length > 0 
+    ? Math.round(totalWeight / bookings.length) 
     : 0;
+  
+  console.log('Total Weight:', totalWeight, 'Total Bookings:', bookings.length);
 
   const analyticsStats = {
     totalUsers: users.length,
