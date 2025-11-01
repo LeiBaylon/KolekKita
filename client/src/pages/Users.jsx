@@ -59,15 +59,20 @@ export default function Users() {
     setShowViewUserDialog(true);
   };
 
-  const getRoleBadgeVariant = (role) => {
+  const getRoleBadgeClass = (role) => {
     switch (role) {
-      case "admin": return "default";
-      case "junk_shop_owner": return "secondary";
-      case "junkshop": return "secondary";
-      case "collector": return "outline";
-      case "customer": return "destructive";
-      case "resident": return "destructive";
-      default: return "outline";
+      case "resident":
+      case "customer":
+        return "bg-green-100 text-green-700 border-green-200";
+      case "collector":
+        return "bg-yellow-100 text-yellow-700 border-yellow-200";
+      case "junkshop":
+      case "junk_shop_owner":
+        return "bg-red-100 text-red-700 border-red-200";
+      case "admin":
+        return "bg-blue-100 text-blue-700 border-blue-200";
+      default:
+        return "bg-gray-100 text-gray-700 border-gray-200";
     }
   };
 
@@ -187,7 +192,7 @@ export default function Users() {
                             <h3 className="font-semibold text-gray-900">
                               {user.name}
                             </h3>
-                            <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs">
+                            <Badge className={`text-xs border ${getRoleBadgeClass(user.role)}`}>
                               {getRoleIcon(user.role)} {user.role}
                             </Badge>
                           </div>
@@ -251,7 +256,7 @@ export default function Users() {
                   <div>
                     <h3 className="text-2xl font-bold">{selectedUser.name}</h3>
                     <div className="flex items-center space-x-2 mt-2">
-                      <Badge variant={getRoleBadgeVariant(selectedUser.role)}>
+                      <Badge className={`border ${getRoleBadgeClass(selectedUser.role)}`}>
                         {getRoleIcon(selectedUser.role)} {selectedUser.role}
                       </Badge>
                     </div>
