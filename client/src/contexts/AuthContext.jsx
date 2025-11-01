@@ -7,6 +7,7 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+import { validatePassword } from "@/utils/passwordValidation";
 
 const AuthContext = createContext(undefined);
 
@@ -69,6 +70,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (email, password, name, role) => {
+    // Validate password strength
+    const validation = validatePassword(password);
+    if (!validation.isValid) {
+      const errorMessage = validation.errors.join(". ");
+      throw new Error(`Password does not meet requirements: ${errorMessage}`);
+    }
+    
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const newUser = {
       email,
