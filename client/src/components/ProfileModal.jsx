@@ -240,7 +240,6 @@ export const ProfileModal = ({ isOpen, onClose }) => {
                   <div className="flex items-center space-x-2 p-2 bg-muted rounded-md text-sm">
                     <Mail className="h-4 w-4 text-muted-foreground" />
                     <span className="flex-1">{user?.email || "Not provided"}</span>
-                    <Badge variant="outline" className="text-xs">Verified</Badge>
                   </div>
                 </div>
 
