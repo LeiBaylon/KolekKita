@@ -57,8 +57,16 @@ export default function Analytics() {
   const collectors = users.filter(u => u.role === "collector");
   
   // Calculate total weight based on actual completed bookings (realistic average per booking)
-  const averageWeightPerBooking = 125; // kg - realistic for household waste collection
-  const totalWeight = completedBookings.length * averageWeightPerBooking;
+  // Calculate total weight from actual estimatedWeight field in completed bookings
+  const totalWeight = completedBookings.reduce((sum, booking) => {
+    const weight = parseFloat(booking.estimatedWeight) || 0;
+    return sum + weight;
+  }, 0);
+  
+  // Calculate average weight per booking
+  const averageWeightPerBooking = completedBookings.length > 0 
+    ? Math.round(totalWeight / completedBookings.length) 
+    : 0;
 
   const analyticsStats = {
     totalUsers: users.length,
