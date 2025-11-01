@@ -291,9 +291,6 @@ export default function Moderation() {
                         </p>
                         <p className="text-sm mt-2 text-gray-900">{report.description}</p>
                         <div className="flex items-center space-x-2 mt-2">
-                          <Badge variant="outline" className="mt-2">
-                            {report.category}
-                          </Badge>
                           <Badge 
                             variant={report.status === 'pending' ? 'outline' : 'default'}
                             className="mt-2"
