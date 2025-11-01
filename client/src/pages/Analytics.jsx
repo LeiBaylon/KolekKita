@@ -57,18 +57,27 @@ export default function Analytics() {
   const collectors = users.filter(u => u.role === "collector");
   
   // Calculate total weight from actual estimatedWeight field in ALL bookings (not just completed)
+  console.log('=== ALL BOOKINGS ===', bookings);
+  
   const totalWeight = bookings.reduce((sum, booking) => {
+    console.log('Booking ID:', booking.id);
+    console.log('Full booking object:', booking);
+    console.log('estimatedWeight value:', booking.estimatedWeight);
+    console.log('Type of estimatedWeight:', typeof booking.estimatedWeight);
+    
     const weight = parseFloat(booking.estimatedWeight) || 0;
-    console.log('Booking:', booking.id, 'Weight:', weight, 'Status:', booking.status);
+    console.log('Parsed weight:', weight);
+    console.log('Running sum:', sum + weight);
+    console.log('---');
     return sum + weight;
   }, 0);
+  
+  console.log('FINAL TOTAL WEIGHT:', totalWeight, 'from', bookings.length, 'bookings');
   
   // Calculate average weight per booking
   const averageWeightPerBooking = bookings.length > 0 
     ? Math.round(totalWeight / bookings.length) 
     : 0;
-  
-  console.log('Total Weight:', totalWeight, 'Total Bookings:', bookings.length);
 
   const analyticsStats = {
     totalUsers: users.length,
