@@ -33,7 +33,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
   const [location] = useLocation();
 
   // Get real-time data for admin notifications (only if user is authenticated)
-  const { data: verificationRequests } = useFirestoreCollection("verification_requests", []);
+  const { data: verifications } = useFirestoreCollection("verifications", []);
   const { data: reportedContent } = useFirestoreCollection("reported_content", []);
 
   const handleRoleChange = (role) => {
@@ -88,7 +88,10 @@ export const Sidebar = ({ isOpen, onClose }) => {
             // Calculate real-time notifications for admin features
             let notificationCount = 0;
             if (item.id === "verification") {
-              notificationCount = verificationRequests.filter((r) => r.status === "pending").length;
+              // Count pending verifications (status is 'pending' or null/undefined)
+              notificationCount = verifications.filter((v) => 
+                v.status === "pending" || !v.status
+              ).length;
             } else if (item.id === "moderation") {
               notificationCount = reportedContent.length;
             }
@@ -98,7 +101,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
                 <div
                   className={cn(
                     "flex items-center px-6 py-3 text-gray-700  hover:bg-gray-50  transition-colors cursor-pointer",
-                    isActive && "text-primary bg-blue-50  border-r-2 border-primary"
+                    isActive && "text-primary bg-green-50  border-r-2 border-primary"
                   )}
                   data-testid={`link-${item.id}`}
                 >
@@ -106,9 +109,10 @@ export const Sidebar = ({ isOpen, onClose }) => {
                   <span className="flex-1">{item.label}</span>
                   {notificationCount > 0 && (
                     <Badge 
-                      variant={item.id === "moderation" ? "destructive" : "secondary"}
+                      variant={item.id === "moderation" ? "destructive" : "default"}
                       className={cn(
-                        "ml-auto text-xs",
+                        "ml-auto text-xs font-semibold",
+                        item.id === "verification" && "bg-green-600 hover:bg-green-700 animate-pulse",
                         item.id === "moderation" && "animate-pulse"
                       )}
                       data-testid={`badge-${item.id}-notifications`}

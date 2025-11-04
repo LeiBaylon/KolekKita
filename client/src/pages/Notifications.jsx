@@ -205,21 +205,6 @@ export default function Notifications() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="type">Type</Label>
-                        <Select value={notificationType} onValueChange={setNotificationType}>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(NotificationService.NotificationTypes).map(([key, value]) => (
-                              <SelectItem key={value} value={value}>
-                                {getNotificationIcon(value)} {key.charAt(0) + key.slice(1).toLowerCase().replace(/_/g, ' ')}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
                         <Label htmlFor="message">Message</Label>
                         <Textarea
                           id="message"
@@ -293,21 +278,12 @@ export default function Notifications() {
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                            <span className="text-lg">{getNotificationIcon(campaign.type)}</span>
-                          </div>
                           
                           <div className="flex-1">
                             <div className="flex items-center space-x-3">
                               <h3 className="font-semibold text-gray-900">
                                 {campaign.title}
                               </h3>
-                              <Badge 
-                                variant="outline" 
-                                className={`${getNotificationTypeBadgeColor(campaign.type)} text-xs`}
-                              >
-                                {getNotificationIcon(campaign.type)} {campaign.type?.replace(/_/g, ' ')}
-                              </Badge>
                             </div>
                             
                             <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600 ">
@@ -371,12 +347,6 @@ export default function Notifications() {
                   {selectedMessage.sentByName && (
                     <div>By: {selectedMessage.sentByName}</div>
                   )}
-                  <Badge 
-                    variant="outline" 
-                    className={`${getNotificationTypeBadgeColor(selectedMessage.type)} text-xs`}
-                  >
-                    {getNotificationIcon(selectedMessage.type)} {selectedMessage.type?.replace(/_/g, ' ')}
-                  </Badge>
                 </div>
               )}
             </DialogDescription>

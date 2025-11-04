@@ -834,7 +834,7 @@ export default function Analytics() {
           <Card className="bg-white border border-gray-200">
             <CardHeader>
               <CardTitle className="text-lg font-semibold flex items-center">
-                <BarChart3 className="h-5 w-5 mr-2 text-blue-600" />
+                <BarChart3 className="h-5 w-5 mr-2 text-green-600" />
                 Monthly Collection Performance
               </CardTitle>
               <p className="text-sm text-gray-600">Total recyclables collected (kg) per month from bookings</p>
@@ -984,13 +984,13 @@ export default function Analytics() {
               <p className="text-sm text-gray-600">Municipalities ranked by user activity and engagement</p>
             </CardHeader>
             <CardContent>
-              {/* Active Users Stats */}
+              {/* Users Stats */}
               <div className="mb-6">
                 <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-green-600">Active Users</p>
+                        <p className="text-sm font-medium text-green-600">Users</p>
                         <p className="text-2xl font-bold text-green-900">{analyticsStats.totalUsers}</p>
                       </div>
                       <div className="w-10 h-10 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">

@@ -96,8 +96,26 @@ export default function Verification() {
       ...verification.metadata
     }
   }))
-  // Sort by submission timestamp (newest first)
+  // Sort by status priority (pending first, then rejected, then approved)
+  // Within each status group, sort by submission timestamp (newest first)
   .sort((a, b) => {
+    // Define status priority: pending = 0, rejected = 1, approved = 2
+    const getStatusPriority = (status) => {
+      if (status === 'pending' || !status) return 0;
+      if (status === 'rejected') return 1;
+      if (status === 'approved') return 2;
+      return 3; // any other status
+    };
+    
+    const priorityA = getStatusPriority(a.status);
+    const priorityB = getStatusPriority(b.status);
+    
+    // First sort by status priority
+    if (priorityA !== priorityB) {
+      return priorityA - priorityB;
+    }
+    
+    // If same status, sort by timestamp (newest first)
     const dateA = getValidDate(a.submissionTimestamp || a.createdAt);
     const dateB = getValidDate(b.submissionTimestamp || b.createdAt);
     return dateB.getTime() - dateA.getTime();
@@ -274,13 +292,9 @@ export default function Verification() {
                           )}
                         </div>
                         <div className="flex-1">
-                          <h3 className="text-lg font-semibold">Junk Shop Verification</h3>
+                          <h3 className="text-lg font-semibold">{verification.shopName || 'Junk Shop Verification'}</h3>
                           <p className="text-sm text-gray-600">Document: {verification.documentType || 'Unknown Document'}</p>
                           <div className="flex items-center space-x-4 text-gray-600 text-sm mt-2">
-                            <span className="flex items-center space-x-1">
-                              <Building2 className="h-4 w-4" />
-                              <span>User ID: {verification.userId}</span>
-                            </span>
                             <span className="flex items-center space-x-1">
                               <Calendar className="h-4 w-4" />
                               <span>Submitted: {verification.metadata?.submissionTimestamp 
@@ -290,39 +304,13 @@ export default function Verification() {
                                   : 'Recently'}</span>
                             </span>
                           </div>
-                          <div className="flex items-center space-x-4 text-gray-600 text-sm mt-1">
-                            <span className="flex items-center space-x-1">
-                              <FileText className="h-4 w-4" />
-                              <span>Type: {verification.documentType}</span>
-                            </span>
-                            {verification.documentURL && (
-                              <span className="flex items-center space-x-1">
-                                <FileText className="h-4 w-4" />
-                                <span>Document Available</span>
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center space-x-2 mt-3">
-                            <Badge variant="secondary">Junk Shop</Badge>
-                            <Badge variant="outline" className={
-                              verification.status === 'approved' ? 'bg-green-100 text-green-800' :
-                              verification.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                              'bg-yellow-100 text-yellow-800'
-                            }>
-                              {verification.status === 'pending' || !verification.status ? 'Pending Review' : 
-                               verification.status.charAt(0).toUpperCase() + verification.status.slice(1)}
-                            </Badge>
-                            {verification.documentType && (
-                              <Badge variant="outline">{verification.documentType.replace('_', ' ')}</Badge>
-                            )}
-                          </div>
                           {verification.rejectionReason && (
                             <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
                               <strong>Rejection Reason:</strong> {verification.rejectionReason}
                             </div>
                           )}
                           {verification.adminNotes && verification.adminNotes !== verification.rejectionReason && (
-                            <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
+                            <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700">
                               <strong>Admin Notes:</strong> {verification.adminNotes}
                             </div>
                           )}
@@ -411,12 +399,6 @@ export default function Verification() {
                                     <label className="text-sm font-medium text-gray-600">Status</label>
                                     <div className="mt-1 p-3 bg-gray-50 rounded-md">
                                       {selectedVerification.status || 'Pending'}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium text-gray-600">User Role</label>
-                                    <div className="mt-1 p-3 bg-gray-50 rounded-md">
-                                      {selectedVerification.userRole || 'Unknown'}
                                     </div>
                                   </div>
                                 </div>
@@ -594,16 +576,6 @@ export default function Verification() {
                 <p className="text-xs text-gray-600">
                   This reason will be sent to the user in a notification.
                 </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="deny-notes">Additional Admin Notes (Optional)</Label>
-                <Textarea
-                  id="deny-notes"
-                  placeholder="Add any internal notes..."
-                  value={verificationNotes}
-                  onChange={(e) => setVerificationNotes(e.target.value)}
-                  rows={2}
-                />
               </div>
             </div>
           )}

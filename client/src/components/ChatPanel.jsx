@@ -128,7 +128,7 @@ export const ChatPanel = () => {
                 {isCurrentUser && (
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={user?.profilePhoto || undefined} />
-                    <AvatarFallback className="bg-blue-600 text-white">
+                    <AvatarFallback className="bg-green-600 text-white">
                       {user?.name?.charAt(0)?.toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>

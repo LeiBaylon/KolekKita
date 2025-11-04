@@ -181,8 +181,8 @@ export default function Users() {
                       <div className="flex items-center space-x-4">
                         <Avatar className="h-12 w-12">
                           <AvatarImage src={user.profilePhoto || ""} alt={user.name} />
-                          <AvatarFallback className="text-lg bg-blue-600 text-white">
-                            {user.name.charAt(0).toUpperCase()}
+                          <AvatarFallback className="text-lg bg-green-600 text-white">
+                            {user.fullName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase() || 'U'}
                           </AvatarFallback>
                         </Avatar>
                         
@@ -248,7 +248,7 @@ export default function Users() {
                 <div className="flex items-center space-x-4">
                   <Avatar className="h-20 w-20">
                     <AvatarImage src={selectedUser.profilePhoto || ""} alt={selectedUser.name} />
-                    <AvatarFallback className="text-2xl bg-blue-600 text-white">
+                    <AvatarFallback className="text-2xl bg-green-600 text-white">
                       {selectedUser.name.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>

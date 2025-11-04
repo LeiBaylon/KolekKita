@@ -70,8 +70,8 @@ export const Header = ({ title, onMenuToggle }) => {
         <div className="flex items-center space-x-3">
           <Avatar className="h-8 w-8" data-testid="avatar-user">
             <AvatarImage src={user?.profilePhoto || undefined} />
-            <AvatarFallback className="bg-blue-600 text-white">
-              {user?.name?.charAt(0)?.toUpperCase() || "U"}
+                        <AvatarFallback className="bg-green-600 text-white">
+              {user?.email?.charAt(0).toUpperCase() || 'A'}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col items-start">
