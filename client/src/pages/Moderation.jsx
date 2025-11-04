@@ -247,7 +247,7 @@ export default function Moderation() {
 
   return (
     <Layout title="Content Moderation">
-      <div className="space-y-8">
+      <div className="space-y-6">
         {/* Hero Section */}
         <Card className="bg-green-600 text-white">
           <CardContent className="p-8">
@@ -265,35 +265,35 @@ export default function Moderation() {
           <CardContent className="space-y-4">
             {reportQueue.length > 0 ? (
               reportQueue.map((report, index) => (
-                <div key={report.id} className="bg-white rounded-lg p-6">
+                <div key={report.id} className="bg-white rounded-lg p-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                         report.priority === 'High' ? 'bg-red-100' : 
                         report.priority === 'Medium' ? 'bg-orange-100' : 'bg-yellow-100'
                       }`}>
                         {report.category === 'Review' ? (
-                          <MessageSquare className={`h-6 w-6 ${
+                          <MessageSquare className={`h-5 w-5 ${
                             report.priority === 'High' ? 'text-red-600' : 
                             report.priority === 'Medium' ? 'text-orange-600' : 'text-yellow-600'
                           }`} />
                         ) : (
-                          <AlertTriangle className={`h-6 w-6 ${
+                          <AlertTriangle className={`h-5 w-5 ${
                             report.priority === 'High' ? 'text-red-600' : 
                             report.priority === 'Medium' ? 'text-orange-600' : 'text-yellow-600'
                           }`} />
                         )}
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900">{report.type}</h3>
-                        <p className="text-gray-600 text-sm mt-1">
+                        <h3 className="font-semibold text-gray-900">{report.type}</h3>
+                        <p className="text-gray-600 text-sm">
                           Reported by {report.reportedBy} • {new Date(report.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </p>
-                        <p className="text-sm mt-2 text-gray-900">{report.description}</p>
-                        <div className="flex items-center space-x-2 mt-2">
+                        <p className="text-sm text-gray-700 line-clamp-1">{report.description}</p>
+                        <div className="flex items-center mt-1">
                           <Badge 
                             variant={report.status === 'pending' ? 'outline' : 'default'}
-                            className="mt-2"
+                            className="text-xs"
                           >
                             {report.status}
                           </Badge>

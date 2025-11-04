@@ -4,6 +4,7 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useFirestoreCollection } from "@/hooks/useFirestore";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useToast } from "@/hooks/use-toast";
 import { orderBy } from "firebase/firestore";
 import { Users, CheckCircle, Shield, BarChart3, Calendar, ChevronDown, ChevronUp } from "lucide-react";
@@ -22,11 +23,38 @@ const getRoleDisplayName = (role) => {
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { data: users } = useFirestoreCollection("users", [orderBy("createdAt", "desc")]);
-  const { data: bookings } = useFirestoreCollection("bookings", [orderBy("createdAt", "desc")]);
-  const { data: reviews } = useFirestoreCollection("reviews", [orderBy("createdAt", "desc")]);
-  const { data: verifications } = useFirestoreCollection("verifications", [orderBy("createdAt", "desc")]);
+  const { data: users, loading: usersLoading, error: usersError } = useFirestoreCollection("users", [orderBy("createdAt", "desc")]);
+  const { data: bookings, loading: bookingsLoading, error: bookingsError } = useFirestoreCollection("bookings", [orderBy("createdAt", "desc")]);
+  const { data: reviews, loading: reviewsLoading, error: reviewsError } = useFirestoreCollection("reviews", [orderBy("createdAt", "desc")]);
+  const { data: verifications, loading: verificationsLoading, error: verificationsError } = useFirestoreCollection("verifications", [orderBy("submissionTimestamp", "desc")]);
   const { toast } = useToast();
+  
+  // Check for loading state
+  const isLoading = usersLoading || bookingsLoading || reviewsLoading || verificationsLoading;
+  const hasError = usersError || bookingsError || reviewsError || verificationsError;
+  
+  // Early return for loading state
+  if (isLoading) {
+    return (
+      <Layout title="Admin Dashboard">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <LoadingSpinner size="lg" />
+        </div>
+      </Layout>
+    );
+  }
+  
+  // Early return for error state
+  if (hasError) {
+    return (
+      <Layout title="Admin Dashboard">
+        <div className="text-center py-8 text-red-600">
+          <p className="font-semibold">Error loading dashboard data</p>
+          <p className="text-sm">{usersError || bookingsError || reviewsError || verificationsError}</p>
+        </div>
+      </Layout>
+    );
+  }
   
   // State for show more/less functionality
   const [showMoreActivities, setShowMoreActivities] = useState(false);

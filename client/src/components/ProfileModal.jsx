@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Dialog,
@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AdminProfileUpload } from "@/components/AdminProfileUpload";
 import { useToast } from "@/hooks/use-toast";
 import { updateDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -35,6 +36,7 @@ export const ProfileModal = ({ isOpen, onClose }) => {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const adminUploadRef = useRef(null);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -44,6 +46,30 @@ export const ProfileModal = ({ isOpen, onClose }) => {
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleProfilePhotoUpdate = async (photoUrl) => {
+    if (!user?.id || !photoUrl) return;
+    
+    try {
+      // Update user document in Firestore with the new profile photo URL
+      await updateDoc(doc(db, "users", user.id), {
+        profilePhoto: photoUrl,
+        updatedAt: new Date()
+      });
+
+      toast({
+        title: "Profile Photo Updated",
+        description: "Your profile photo has been successfully updated."
+      });
+    } catch (error) {
+      console.error("Error updating profile photo:", error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to update profile photo. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleSave = async () => {
@@ -108,7 +134,7 @@ export const ProfileModal = ({ isOpen, onClose }) => {
   const getRoleColor = (role) => {
     switch (role) {
       case 'admin': return 'bg-red-100 text-red-800  ';
-      case 'moderator': return 'bg-blue-100 text-blue-800  ';
+      case 'moderator': return 'bg-green-100 text-green-800  ';
       default: return 'bg-gray-100 text-gray-800  ';
     }
   };
@@ -125,7 +151,7 @@ export const ProfileModal = ({ isOpen, onClose }) => {
 
         <div className="space-y-6">
           {/* Profile Header */}
-          <Card className="bg-blue-600 text-white">
+          <Card className="bg-green-600 text-white">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
@@ -133,13 +159,14 @@ export const ProfileModal = ({ isOpen, onClose }) => {
                   <div className="relative">
                     <Avatar className="w-16 h-16 border-2 border-white/20">
                       <AvatarImage src={user?.profilePhoto || undefined} />
-                      <AvatarFallback className="bg-blue-600 text-white text-lg">
+                      <AvatarFallback className="bg-green-600 text-white text-lg">
                         {user?.name?.charAt(0)?.toUpperCase() || "A"}
                       </AvatarFallback>
                     </Avatar>
                     <Button
                       size="sm"
                       className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-white/20 hover:bg-white/30 p-0"
+                      onClick={() => adminUploadRef.current?.openDialog()}
                     >
                       <Camera className="h-3 w-3" />
                     </Button>
@@ -155,11 +182,11 @@ export const ProfileModal = ({ isOpen, onClose }) => {
                         <Shield className="h-3 w-3 mr-1" />
                         {user?.role?.toUpperCase() || "ADMIN"}
                       </Badge>
-                      <span className="text-blue-100 text-sm">
+                      <span className="text-green-100 text-sm">
                         Member since {formatDate(user?.createdAt)}
                       </span>
                     </div>
-                    <p className="text-blue-100 text-sm max-w-md">
+                    <p className="text-green-100 text-sm max-w-md">
                       Platform administrator with full system access and management capabilities.
                     </p>
                   </div>
@@ -312,6 +339,12 @@ export const ProfileModal = ({ isOpen, onClose }) => {
           </div>
         </div>
       </DialogContent>
+      
+      {/* Admin Profile Upload Component */}
+      <AdminProfileUpload 
+        ref={adminUploadRef}
+        onUploadComplete={handleProfilePhotoUpdate}
+      />
     </Dialog>
   );
 };

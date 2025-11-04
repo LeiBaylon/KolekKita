@@ -28,11 +28,7 @@ export class NotificationService {
    */
   static NotificationTypes = {
     ANNOUNCEMENT: "announcement",
-    VERIFICATION_APPROVED: "verification_approved",
-    VERIFICATION_DENIED: "verification_denied",
-    SYSTEM: "system",
-    BOOKING: "booking",
-    CHAT: "chat"
+    SYSTEM: "system"
   };
 
   /**

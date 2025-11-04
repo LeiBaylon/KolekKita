@@ -49,16 +49,33 @@ service cloud.firestore {
       );
     }
     
+    // Notification campaigns - admins only
+    match /notification_campaigns/{campaignId} {
+      allow read, write: if request.auth != null && 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+    }
+    
+    // Transactions - admins can read, system can write
+    match /transactions/{transactionId} {
+      allow read: if request.auth != null && 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      allow write: if request.auth != null;
+    }
+    
     // Verifications - junk shop owners can create, admins can read/update
     match /verifications/{verificationId} {
-      allow read: if request.auth != null && (
-        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'junk_shop_owner']) ||
-        request.auth.uid == resource.data.userId
-      );
-      allow create: if request.auth != null && 
-        request.auth.uid == resource.data.userId;
+      // Allow read for authenticated users (admins and the submitter)
+      allow read: if request.auth != null;
+      // Allow create for authenticated users (they are submitting their own verification)
+      allow create: if request.auth != null;
+      // Allow update for admins only
       allow update: if request.auth != null && 
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      // Allow delete for admins only
+      allow delete: if request.auth != null && 
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }

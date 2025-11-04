@@ -60,7 +60,22 @@ export default function Verification() {
   };
 
   // Fetch verifications with proper ordering using enhanced hook
-  const { data: allVerifications = [], loading, error } = useFirestoreCollection("verifications", [orderBy("createdAt", "desc")]);
+  // Try without orderBy first to see if data exists
+  const { data: allVerifications = [], loading, error } = useFirestoreCollection("verifications");
+  
+  // Debug logging to see what's being fetched
+  useEffect(() => {
+    console.log('🔍 Verification Page - Debug Info:');
+    console.log('  - allVerifications:', allVerifications);
+    console.log('  - allVerifications.length:', allVerifications.length);
+    console.log('  - loading:', loading);
+    console.log('  - error:', error);
+    
+    // Log individual items
+    if (allVerifications.length > 0) {
+      console.log('  - First verification:', allVerifications[0]);
+    }
+  }, [allVerifications, loading, error]);
   
   // Map mobile app fields to admin web app expected fields
   const mappedVerifications = allVerifications.map(verification => ({
@@ -68,23 +83,35 @@ export default function Verification() {
     // Map submittedBy to userId for consistency with admin interface
     userId: verification.userId || verification.submittedBy,
     // Map submissionTimestamp to createdAt if createdAt is missing
-    createdAt: verification.createdAt || verification.submissionTimestamp,
+    createdAt: verification.createdAt || verification.submissionTimestamp || verification.uploadedAt,
+    // Ensure we have submission timestamp
+    submissionTimestamp: verification.submissionTimestamp || verification.createdAt || verification.uploadedAt,
+    // Map document fields properly
+    documentType: verification.documentType || "PhilSys ID",
+    documentURL: verification.documentURL || verification.documentUrl,
     // Ensure metadata structure
     metadata: {
-      submissionTimestamp: verification.submissionTimestamp || verification.metadata?.submissionTimestamp,
+      submissionTimestamp: verification.submissionTimestamp || verification.metadata?.submissionTimestamp || verification.uploadedAt,
+      submittedBy: verification.submittedBy || verification.userId,
       ...verification.metadata
     }
-  }));
+  }))
+  // Sort by submission timestamp (newest first)
+  .sort((a, b) => {
+    const dateA = getValidDate(a.submissionTimestamp || a.createdAt);
+    const dateB = getValidDate(b.submissionTimestamp || b.createdAt);
+    return dateB.getTime() - dateA.getTime();
+  });
 
   // Filter verifications by status and role - properly sync with database
   const junkshopVerifications = mappedVerifications;
   
 
+
   
   const pendingJunkshops = junkshopVerifications.filter(item => item.status === 'pending' || !item.status);
   const approvedJunkshops = junkshopVerifications.filter(item => item.status === 'approved');
   const rejectedJunkshops = junkshopVerifications.filter(item => item.status === 'rejected');
-  const underReviewJunkshops = junkshopVerifications.filter(item => item.status === 'under_review');
 
   // Firestore operations for direct updates
   const { updateDocument } = useFirestoreOperations('verifications');
@@ -200,48 +227,6 @@ export default function Verification() {
           </CardContent>
         </Card>
 
-        {/* Search and Filters */}
-        <Card className="bg-white border border-gray-200">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <ShieldCheck className="h-5 w-5 mr-2" />
-              Verification Directory
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Verification Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
-              <div className="text-center p-4 bg-white rounded-lg border-green-200 border">
-                <div className="text-2xl font-bold text-green-600">
-                  {allVerifications.length}
-                </div>
-                <div className="text-sm text-green-600">Total</div>
-              </div>
-              <div className="text-center p-4 bg-white rounded-lg border-yellow-200 border">
-                <div className="text-2xl font-bold text-yellow-600">
-                  {pendingJunkshops.length}
-                </div>
-                <div className="text-sm text-yellow-600">Pending</div>
-              </div>
-              <div className="text-center p-4 bg-white rounded-lg border-green-200 border">
-                <div className="text-2xl font-bold text-green-600">
-                  {approvedJunkshops.length}
-                </div>
-                <div className="text-sm text-green-600">Approved</div>
-              </div>
-              <div className="text-center p-4 bg-white rounded-lg border-red-200 border">
-                <div className="text-2xl font-bold text-red-600">
-                  {rejectedJunkshops.length}
-                </div>
-                <div className="text-sm text-red-600">Rejected</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-
-
-
         {/* Verification Results */}
         <Card className="bg-white border border-gray-200">
           <CardHeader>
@@ -252,7 +237,18 @@ export default function Verification() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {junkshopVerifications.length > 0 ? (
+              {loading ? (
+                <div className="text-center py-8 text-gray-600">
+                  <Clock className="h-12 w-12 mx-auto mb-4 opacity-50 animate-spin" />
+                  <p>Loading verifications...</p>
+                </div>
+              ) : error ? (
+                <div className="text-center py-8 text-red-600">
+                  <XCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p className="font-semibold">Error loading verifications</p>
+                  <p className="text-sm">{error}</p>
+                </div>
+              ) : junkshopVerifications.length > 0 ? (
                 junkshopVerifications.map((verification) => (
                   <div 
                     key={verification.id} 
@@ -314,7 +310,6 @@ export default function Verification() {
                               'bg-yellow-100 text-yellow-800'
                             }>
                               {verification.status === 'pending' || !verification.status ? 'Pending Review' : 
-                               verification.status === 'under_review' ? 'Under Review' : 
                                verification.status.charAt(0).toUpperCase() + verification.status.slice(1)}
                             </Badge>
                             {verification.documentType && (

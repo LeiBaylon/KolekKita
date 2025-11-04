@@ -22,7 +22,8 @@ export default function Notifications() {
   const [notificationType, setNotificationType] = useState(NotificationService.NotificationTypes.SYSTEM);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastSentId, setLastSentId] = useState(null); // Prevent duplicate sends
-  const [expandedCampaigns, setExpandedCampaigns] = useState(new Set()); // Track expanded campaigns
+  const [selectedMessage, setSelectedMessage] = useState(null); // For message dialog
+  const [isMessageDialogOpen, setIsMessageDialogOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -280,15 +281,9 @@ export default function Notifications() {
             ) : (!loading && (
               <div className="divide-y divide-gray-200">
                 {filteredCampaigns.map((campaign) => {
-                  const isExpanded = expandedCampaigns.has(campaign.id);
-                  const toggleExpanded = () => {
-                    const newExpanded = new Set(expandedCampaigns);
-                    if (isExpanded) {
-                      newExpanded.delete(campaign.id);
-                    } else {
-                      newExpanded.add(campaign.id);
-                    }
-                    setExpandedCampaigns(newExpanded);
+                  const openMessageDialog = () => {
+                    setSelectedMessage(campaign);
+                    setIsMessageDialogOpen(true);
                   };
 
                   return (
@@ -313,19 +308,9 @@ export default function Notifications() {
                               >
                                 {getNotificationIcon(campaign.type)} {campaign.type?.replace(/_/g, ' ')}
                               </Badge>
-                              <Badge 
-                                variant={campaign.status === 'completed' ? "default" : "secondary"}
-                                className="text-xs"
-                              >
-                                {campaign.status === 'completed' ? "Delivered" : "Sending"}
-                              </Badge>
                             </div>
                             
                             <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600 ">
-                              <div className="flex items-center">
-                                <User className="h-4 w-4 mr-1" />
-                                {campaign.actualSentCount || campaign.userBreakdown?.total || 0} recipients
-                              </div>
                               <div className="flex items-center">
                                 <Calendar className="h-4 w-4 mr-1" />
                                 {getValidDate(campaign.createdAt).toLocaleDateString('en-US', {
@@ -338,12 +323,6 @@ export default function Notifications() {
                                 <div>By: {campaign.sentByName}</div>
                               )}
                             </div>
-                            
-                            {!isExpanded && (
-                              <div className="mt-2 text-sm text-gray-500  line-clamp-2">
-                                {campaign.message}
-                              </div>
-                            )}
                           </div>
                         </div>
 
@@ -351,52 +330,12 @@ export default function Notifications() {
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={toggleExpanded}
+                            onClick={openMessageDialog}
                           >
-                            {isExpanded ? 'Hide Details' : 'View Details'}
+                            View Message
                           </Button>
                         </div>
                       </div>
-
-                      {/* Expanded Details */}
-                      {isExpanded && (
-                        <div className="mt-4 pl-16 space-y-4 border-t border-gray-200  pt-4">
-                          <div className="p-3 bg-gray-50  rounded-lg">
-                            <h5 className="font-medium text-sm mb-2">Message Content:</h5>
-                            <p className="text-sm whitespace-pre-wrap">
-                              {campaign.message}
-                            </p>
-                          </div>
-                          
-                          {campaign.userBreakdown && (
-                            <div>
-                              <h4 className="font-semibold text-sm mb-3 flex items-center">
-                                Recipient Breakdown
-                              </h4>
-                              <div className="grid grid-cols-3 gap-3">
-                                <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
-                                  <div className="text-xl font-bold text-green-600">
-                                    {campaign.userBreakdown.junkShops || 0}
-                                  </div>
-                                  <div className="text-xs text-green-600">Junk Shops</div>
-                                </div>
-                                <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
-                                  <div className="text-xl font-bold text-green-600">
-                                    {campaign.userBreakdown.collectors || 0}
-                                  </div>
-                                  <div className="text-xs text-green-600">Collectors</div>
-                                </div>
-                                <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
-                                  <div className="text-xl font-bold text-green-600">
-                                    {campaign.userBreakdown.residents || 0}
-                                  </div>
-                                  <div className="text-xs text-green-600">Residents</div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </div>
                   );
                 })}
@@ -405,6 +344,63 @@ export default function Notifications() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Message Content Dialog */}
+      <Dialog open={isMessageDialogOpen} onOpenChange={setIsMessageDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              {selectedMessage && (
+                <>
+                  <span>{getNotificationIcon(selectedMessage.type)}</span>
+                  <span>{selectedMessage.title}</span>
+                </>
+              )}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedMessage && (
+                <div className="flex items-center space-x-4 text-sm text-gray-600">
+                  <div className="flex items-center">
+                    <Calendar className="h-4 w-4 mr-1" />
+                    {getValidDate(selectedMessage.createdAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    })}
+                  </div>
+                  {selectedMessage.sentByName && (
+                    <div>By: {selectedMessage.sentByName}</div>
+                  )}
+                  <Badge 
+                    variant="outline" 
+                    className={`${getNotificationTypeBadgeColor(selectedMessage.type)} text-xs`}
+                  >
+                    {getNotificationIcon(selectedMessage.type)} {selectedMessage.type?.replace(/_/g, ' ')}
+                  </Badge>
+                </div>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="mt-4">
+            <div className="p-4 bg-gray-50 rounded-lg border">
+              <h5 className="font-medium text-sm mb-3">Message Content:</h5>
+              <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                {selectedMessage?.message}
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsMessageDialogOpen(false)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }

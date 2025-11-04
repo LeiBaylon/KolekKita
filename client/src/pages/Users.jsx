@@ -49,10 +49,18 @@ export default function Users() {
 
   const constraints = [orderBy("createdAt", "desc")];
 
-  const { data: allUsers, loading, error } = useFirestoreCollection(
+  const { data: allUsersData, loading, error } = useFirestoreCollection(
     "users",
     constraints
   );
+
+  // Filter out admin users from the display - comprehensive filter
+  const allUsers = allUsersData ? allUsersData.filter(user => 
+    user.role !== "admin" && 
+    user.role !== "administrator" && 
+    user.email !== "admin@kolekkita.com" &&
+    user.email !== "admin2@kolekkita.com"
+  ) : [];
 
   const handleViewUser = (user) => {
     setSelectedUser(user);
@@ -69,8 +77,6 @@ export default function Users() {
       case "junkshop":
       case "junk_shop_owner":
         return "bg-red-100 text-red-700 border-red-200";
-      case "admin":
-        return "bg-blue-100 text-blue-700 border-blue-200";
       default:
         return "bg-gray-100 text-gray-700 border-gray-200";
     }
@@ -78,7 +84,6 @@ export default function Users() {
 
   const getRoleIcon = (role) => {
     switch (role) {
-      case "admin": return "";
       case "junk_shop_owner": return "";
       case "junkshop": return "";
       case "collector": return "";
@@ -133,13 +138,7 @@ export default function Users() {
             )}
 
             {/* User Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
-              <div className="text-center p-4 bg-white rounded-lg border-green-200 border">
-                <div className="text-2xl font-bold text-green-600">
-                  {allUsers.filter(u => u.role === "admin").length}
-                </div>
-                <div className="text-sm text-green-600">Admins</div>
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
               <div className="text-center p-4 bg-white rounded-lg border-green-200 border">
                 <div className="text-2xl font-bold text-green-600">
                   {allUsers.filter(u => u.role === "junk_shop_owner" || u.role === "junkshop").length}
