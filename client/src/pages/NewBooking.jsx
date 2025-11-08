@@ -37,8 +37,10 @@ export default function NewBooking() {
         customerId: user.id,
         pickupLocation: formData.pickupLocation,
         dropoffLocation: formData.dropoffLocation || "Recycling Center",
+        municipality: user.municipality || null, // Add municipality from user
         scheduledTime: formData.scheduledTime ? new Date(formData.scheduledTime) : null,
         notes: `${formData.materialType ? `Material: ${formData.materialType}. ` : ''}${formData.estimatedWeight ? `Estimated weight: ${formData.estimatedWeight}kg. ` : ''}${formData.notes}`,
+        junkType: formData.materialType || null, // Add junkType field
         estimatedWeight: formData.estimatedWeight ? parseFloat(formData.estimatedWeight) : 0,
         status: "pending",
         photos: [],
@@ -120,6 +122,7 @@ export default function NewBooking() {
                     <SelectItem value="mixed">Mixed Materials</SelectItem>
                     <SelectItem value="furniture">Furniture</SelectItem>
                     <SelectItem value="appliances">Appliances</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

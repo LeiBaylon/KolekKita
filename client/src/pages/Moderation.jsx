@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useFirestoreCollection, useFirestoreOperations } from "@/hooks/useFirestore";
 import { useToast } from "@/hooks/use-toast";
 import { orderBy } from "firebase/firestore";
-import { AlertTriangle, Flag, MessageSquare, ShieldCheck, Eye, CheckCircle, XCircle, Clock } from "lucide-react";
+import { AlertTriangle, Flag, MessageSquare, ShieldCheck, Eye, CheckCircle, XCircle, Clock, Plus } from "lucide-react";
 
 
 export default function Moderation() {
@@ -27,6 +27,7 @@ export default function Moderation() {
   
   const { toast } = useToast();
   const { addDocument, updateDocument } = useFirestoreOperations("reports");
+  const { addDocument: addNotification } = useFirestoreOperations("notifications");
   
   // Helper function to safely convert timestamps to Date objects
   const getValidDate = (timestamp) => {
@@ -62,6 +63,15 @@ export default function Moderation() {
   const { data: reviews } = useFirestoreCollection("reviews", [orderBy("createdAt", "desc")]);
   const { data: bookings } = useFirestoreCollection("bookings", [orderBy("createdAt", "desc")]);
   const { data: reports } = useFirestoreCollection("reports", [orderBy("createdAt", "desc")]);
+  
+  // Get resolved system-generated report IDs to exclude from the queue
+  const resolvedSystemReportIds = new Set(
+    reports
+      .filter(r => r.systemGeneratedId && r.status === 'resolved')
+      .map(r => r.systemGeneratedId)
+  );
+  
+  console.log('Resolved system-generated reports:', Array.from(resolvedSystemReportIds));
   
   // Real moderation statistics based on data
   const flaggedReviews = reviews.filter(review => 
@@ -104,39 +114,48 @@ export default function Moderation() {
       status: report.status || 'pending',
       originalReport: report // Keep reference to original data
     })),
-    // Flagged reviews
-    ...flaggedReviews.map(review => ({
-      id: `review-${review.id}`,
-      type: 'Inappropriate Content',
-      category: 'Review',
-      description: `${review.rating <= 1 ? 'Very low rating' : 'Low rating'} review (${review.rating}/5 stars)${review.comment ? ': "' + review.comment.substring(0, 50) + '..."' : ''}`,
-      reportedBy: 'System Detection',
-      priority: review.rating <= 1 ? 'High' : 'Medium',
-      date: getValidDate(review.createdAt).toISOString(),
-      status: 'pending'
-    })),
-    // Suspicious users
-    ...suspiciousUsers.slice(0, 5).map(user => ({
-      id: `user-${user.id}`,
-      type: 'Suspicious Account',
-      category: 'User',
-      description: `Account with incomplete or suspicious profile: ${user.name || 'No name'} (${user.email || 'No email'})`,
-      reportedBy: 'System Validation',
-      priority: 'Medium',
-      date: getValidDate(user.createdAt).toISOString(),
-      status: 'pending'
-    })),
-    // Problematic bookings
-    ...problematicBookings.slice(0, 3).map(booking => ({
-      id: `booking-${booking.id}`,
-      type: 'Booking Issue',
-      category: 'Transaction',
-      description: `${booking.status === 'cancelled' ? 'Cancelled booking' : 'Incomplete booking data'} - ${booking.pickupLocation || 'Unknown pickup'} to ${booking.dropoffLocation || 'Unknown dropoff'}`,
-      reportedBy: 'System Monitor',
-      priority: booking.status === 'cancelled' ? 'Low' : 'Medium',
-      date: getValidDate(booking.createdAt).toISOString(),
-      status: 'pending'
-    }))
+    // Flagged reviews - exclude if already resolved
+    ...flaggedReviews
+      .filter(review => !resolvedSystemReportIds.has(`review-${review.id}`))
+      .map(review => ({
+        id: `review-${review.id}`,
+        type: 'Inappropriate Content',
+        category: 'Review',
+        description: `${review.rating <= 1 ? 'Very low rating' : 'Low rating'} review (${review.rating}/5 stars)${review.comment ? ': "' + review.comment.substring(0, 50) + '..."' : ''}`,
+        reportedBy: 'System Detection',
+        reportedUserId: review.reviewerId || null,
+        priority: review.rating <= 1 ? 'High' : 'Medium',
+        date: getValidDate(review.createdAt).toISOString(),
+        status: 'pending'
+      })),
+    // Suspicious users - exclude if already resolved
+    ...suspiciousUsers.slice(0, 5)
+      .filter(user => !resolvedSystemReportIds.has(`user-${user.id}`))
+      .map(user => ({
+        id: `user-${user.id}`,
+        type: 'Suspicious Account',
+        category: 'User',
+        description: `Account with incomplete or suspicious profile: ${user.name || 'No name'} (${user.email || 'No email'})`,
+        reportedBy: 'System Validation',
+        reportedUserId: user.id,
+        priority: 'Medium',
+        date: getValidDate(user.createdAt).toISOString(),
+        status: 'pending'
+      })),
+    // Problematic bookings - exclude if already resolved
+    ...problematicBookings.slice(0, 3)
+      .filter(booking => !resolvedSystemReportIds.has(`booking-${booking.id}`))
+      .map(booking => ({
+        id: `booking-${booking.id}`,
+        type: 'Booking Issue',
+        category: 'Transaction',
+        description: `${booking.status === 'cancelled' ? 'Cancelled booking' : 'Incomplete booking data'} - ${booking.pickupLocation || 'Unknown pickup'} to ${booking.dropoffLocation || 'Unknown dropoff'}`,
+        reportedBy: 'System Monitor',
+        reportedUserId: booking.customerId || null,
+        priority: booking.status === 'cancelled' ? 'Low' : 'Medium',
+        date: getValidDate(booking.createdAt).toISOString(),
+        status: 'pending'
+      }))
   ].sort((a, b) => {
     // First sort by status: pending reports come first
     const aStatus = a.status === 'pending' || !a.status ? 0 : 1;
@@ -188,6 +207,7 @@ export default function Moderation() {
         actionNotes: actionNotes,
         resolvedBy: 'admin',
         resolvedAt: new Date(),
+        updatedAt: new Date(),
         actionSettings: {
           suspensionDuration: actionType === 'user_suspended' ? suspensionDuration : null,
           warningLevel: actionType === 'warning_issued' ? warningLevel : null,
@@ -196,24 +216,55 @@ export default function Moderation() {
         }
       };
       
-      // Update the report status
+      // Update the report status - ALWAYS update the existing report in database
       if (selectedReport.id.startsWith('review-') || selectedReport.id.startsWith('user-') || selectedReport.id.startsWith('booking-')) {
-        // For system-generated reports, create a new record or update existing
-        console.log('Creating new resolved report record for system-generated report');
+        // For system-generated reports, we need to find and update the actual source
+        // Extract the actual ID from the prefixed ID
+        const actualId = selectedReport.id.split('-').slice(1).join('-');
+        console.log('System-generated report detected, actual ID:', actualId);
+        
+        // Create a resolved report record in the reports collection
         await addDocument({
-          originalId: selectedReport.id,
+          systemGeneratedId: selectedReport.id,
+          originalId: actualId,
           type: selectedReport.type,
           category: selectedReport.category,
           description: selectedReport.description,
           reportedBy: selectedReport.reportedBy,
+          reportedUserId: selectedReport.reportedUserId || actualId,
           priority: selectedReport.priority,
           ...actionData,
           createdAt: new Date(selectedReport.date)
         });
+        
+        console.log('Created resolved report record for system-generated report');
       } else {
         // For direct reports from database, update the existing document
         console.log('Updating existing report in database:', selectedReport.id);
         await updateDocument(selectedReport.id, actionData);
+      }
+      
+      // Create notification for the reported user if applicable
+      if (selectedReport.reportedUserId) {
+        try {
+          await addNotification({
+            userId: selectedReport.reportedUserId,
+            title: "Moderation Action Taken",
+            message: `Action taken on report: ${actionType}. ${actionNotes || 'No additional notes.'}`,
+            type: "system",
+            isRead: false,
+            createdAt: new Date(),
+            data: {
+              reportId: selectedReport.id,
+              actionType: actionType,
+              actionNotes: actionNotes
+            }
+          });
+          console.log('Notification sent to reported user');
+        } catch (notifError) {
+          console.error('Failed to send notification:', notifError);
+          // Don't fail the whole action if notification fails
+        }
       }
 
       toast({
@@ -255,6 +306,16 @@ export default function Moderation() {
               <div>
                 <h1 className="text-3xl font-bold mb-2">Content Moderation</h1>
                 <p className="text-green-100">Review reports, reviews, and manage platform content</p>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Button 
+                  variant="secondary" 
+                  size="sm" 
+                  className="bg-white text-green-600 hover:bg-white/90"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Manage Municipalities
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -362,14 +423,16 @@ export default function Moderation() {
                       {selectedReport.reportedBy}
                     </div>
                   </div>
-                  {selectedReport.reportedUser && (
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">Reported User</label>
-                      <div className="mt-1 p-3">
-                        {selectedReport.reportedUser}
-                      </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Reported User</label>
+                    <div className="mt-1 p-3">
+                      {selectedReport.reportedUser || 
+                       (selectedReport.reportedUserId ? 
+                         users.find(u => u.id === selectedReport.reportedUserId)?.name || 
+                         `User ID: ${selectedReport.reportedUserId}` 
+                         : 'N/A')}
                     </div>
-                  )}
+                  </div>
                 </div>
                 
                 <div>
@@ -409,13 +472,15 @@ export default function Moderation() {
                   <Button variant="outline" onClick={() => setShowReviewDialog(false)}>
                     Close
                   </Button>
-                  <Button onClick={() => {
-                    setShowReviewDialog(false);
-                    handleTakeAction(selectedReport);
-                  }}>
-                    <ShieldCheck className="h-4 w-4 mr-2" />
-                    Take Action
-                  </Button>
+                  {selectedReport.status !== 'resolved' && (
+                    <Button onClick={() => {
+                      setShowReviewDialog(false);
+                      handleTakeAction(selectedReport);
+                    }}>
+                      <ShieldCheck className="h-4 w-4 mr-2" />
+                      Take Action
+                    </Button>
+                  )}
                 </div>
               </div>
             )}

@@ -157,11 +157,14 @@ export const insertBookingSchema = z.object({
   status: z.enum(["pending", "assigned", "in_progress", "completed", "cancelled"]).default("pending"),
   pickupLocation: z.string().min(1),
   dropoffLocation: z.string().min(1),
+  municipality: z.string().nullable().optional(), // Municipality where user is from
   pickupCoords: z.object({lat: z.number(), lng: z.number()}).nullable().optional(),
   dropoffCoords: z.object({lat: z.number(), lng: z.number()}).nullable().optional(),
   scheduledTime: z.date().nullable().optional(),
   completedTime: z.date().nullable().optional(),
   price: z.string().nullable().optional(),
+  junkType: z.string().nullable().optional(), // Type of material (Paper, Plastic, Metal, Glass, Electronic)
+  estimatedWeight: z.string().nullable().optional(), // Weight in kg
   notes: z.string().nullable().optional(),
   photos: z.array(z.string()).default([]),
 });
@@ -242,6 +245,31 @@ export const insertJunkShopSchema = z.object({
   services: z.array(z.string()).default([]),
 });
 
+export const insertReportSchema = z.object({
+  type: z.string().min(1), // Report type (e.g., "Inappropriate Content", "Suspicious Account")
+  category: z.string().min(1), // Category (e.g., "Review", "User", "Transaction")
+  description: z.string().min(1), // Detailed description of the report
+  reportedBy: z.string().min(1), // Name or ID of the reporter
+  reporterId: z.string().nullable().optional(), // ID of the user who reported
+  reportedUserId: z.string().nullable().optional(), // ID of the reported user
+  reportedUserName: z.string().nullable().optional(), // Name of the reported user
+  priority: z.enum(["Low", "Medium", "High"]).default("Medium"),
+  status: z.enum(["pending", "resolved", "dismissed"]).default("pending"),
+  actionTaken: z.string().nullable().optional(), // Action taken (e.g., "account_banned", "content_removed")
+  actionNotes: z.string().nullable().optional(), // Notes about the action
+  resolvedBy: z.string().nullable().optional(), // Admin who resolved
+  resolvedAt: z.date().nullable().optional(), // When it was resolved
+  systemGeneratedId: z.string().nullable().optional(), // ID for system-generated reports
+  originalId: z.string().nullable().optional(), // Original item ID (review, user, booking)
+  evidenceFiles: z.array(z.string()).default([]),
+  actionSettings: z.object({
+    suspensionDuration: z.string().nullable().optional(),
+    warningLevel: z.string().nullable().optional(),
+    contentType: z.string().nullable().optional(),
+    banReason: z.string().nullable().optional()
+  }).nullable().optional(),
+});
+
 // Insert types (converted to constants for JavaScript)
 export const UserRoles = {
   ADMIN: "admin",
@@ -267,6 +295,13 @@ export const VerificationStatuses = {
   UNDER_REVIEW: "under_review"
 };
 
+// Report status constants
+export const ReportStatuses = {
+  PENDING: "pending",
+  RESOLVED: "resolved",
+  DISMISSED: "dismissed"
+};
+
 // Document types for verification
 export const DocumentTypes = {
   BUSINESS_LICENSE: "business_license",
@@ -274,3 +309,4 @@ export const DocumentTypes = {
   IDENTIFICATION: "identification",
   PERMIT: "permit"
 };
+

@@ -4,12 +4,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { useFirestoreCollection } from "@/hooks/useFirestore";
 import { useToast } from "@/hooks/use-toast";
-import { orderBy } from "firebase/firestore";
+import { orderBy, doc, setDoc, getDoc, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { TrendingUp, Users, Activity, ArrowUpIcon, Package, Recycle, Calendar, BarChart3, PieChart as PieChartIcon, TrendingDown, Star, X } from "lucide-react";
+import { TrendingUp, Users, Activity, ArrowUpIcon, Package, Recycle, Calendar, BarChart3, PieChart as PieChartIcon, TrendingDown, Star, X, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Analytics() {
@@ -19,16 +22,52 @@ export default function Analytics() {
   const [isParticipationModalOpen, setIsParticipationModalOpen] = useState(false);
   const [selectedMaterialsMunicipality, setSelectedMaterialsMunicipality] = useState("");
   const [isMaterialsModalOpen, setIsMaterialsModalOpen] = useState(false);
+  const [isMunicipalityModalOpen, setIsMunicipalityModalOpen] = useState(false);
+  const [newMunicipality, setNewMunicipality] = useState("");
+  const [municipalities, setMunicipalities] = useState([]);
+  const [loadingMunicipalities, setLoadingMunicipalities] = useState(true);
   const { toast } = useToast();
   
-  // Batangas municipalities list
-  const batangasMunicipalities = [
-    "Agoncillo", "Alitagtag", "Balayan", "Balete", "Batangas City", "Bauan", "Calaca", "Calatagan", 
-    "Cuenca", "Ibaan", "Laurel", "Lemery", "Lian", "Lobo", "Mabini", "Malvar", 
-    "Mataasnakahoy", "Nasugbu", "Padre Garcia", "Rosario", "San Jose", "San Juan", 
-    "San Luis", "San Nicolas", "San Pascual", "Santa Teresita", "Taal", "Talisay", 
-    "Taysan", "Tingloy", "Tuy"
-  ];
+  // Batangas municipalities list (use state instead)
+  const batangasMunicipalities = municipalities;
+
+  // Load municipalities from Firestore on mount
+  useEffect(() => {
+    const municipalitiesDocRef = doc(db, "settings", "municipalities");
+    
+    // Set up real-time listener
+    const unsubscribe = onSnapshot(municipalitiesDocRef, async (docSnapshot) => {
+      if (docSnapshot.exists()) {
+        const data = docSnapshot.data();
+        setMunicipalities(data.list || []);
+      } else {
+        // Initialize with default municipalities if document doesn't exist
+        const defaultMunicipalities = [
+          "Agoncillo", "Alitagtag", "Balayan", "Balete", "Batangas City", "Bauan", "Calaca", "Calatagan", 
+          "Cuenca", "Ibaan", "Laurel", "Lemery", "Lian", "Lobo", "Mabini", "Malvar", 
+          "Mataasnakahoy", "Nasugbu", "Padre Garcia", "Rosario", "San Jose", "San Juan", 
+          "San Luis", "San Nicolas", "San Pascual", "Santa Teresita", "Taal", "Talisay", 
+          "Taysan", "Tingloy", "Tuy"
+        ];
+        await setDoc(municipalitiesDocRef, { 
+          list: defaultMunicipalities,
+          updatedAt: new Date()
+        });
+        setMunicipalities(defaultMunicipalities);
+      }
+      setLoadingMunicipalities(false);
+    }, (error) => {
+      console.error("Error loading municipalities:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load municipalities",
+        variant: "destructive",
+      });
+      setLoadingMunicipalities(false);
+    });
+
+    return () => unsubscribe();
+  }, [toast]);
   
   // Helper function to safely convert timestamps to Date objects
   const getValidDate = (timestamp) => {
@@ -57,6 +96,74 @@ export default function Analytics() {
     
     // Fallback to current date
     return new Date();
+  };
+
+  // Municipality management functions
+  const handleAddMunicipality = async () => {
+    if (!newMunicipality.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a municipality name",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (municipalities.includes(newMunicipality.trim())) {
+      toast({
+        title: "Error",
+        description: "Municipality already exists",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const updatedMunicipalities = [...municipalities, newMunicipality.trim()].sort();
+      const municipalitiesDocRef = doc(db, "settings", "municipalities");
+      
+      await setDoc(municipalitiesDocRef, {
+        list: updatedMunicipalities,
+        updatedAt: new Date()
+      });
+
+      setNewMunicipality("");
+      toast({
+        title: "Success",
+        description: `${newMunicipality.trim()} added successfully`,
+      });
+    } catch (error) {
+      console.error("Error adding municipality:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add municipality",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteMunicipality = async (municipalityToDelete) => {
+    try {
+      const updatedMunicipalities = municipalities.filter(m => m !== municipalityToDelete);
+      const municipalitiesDocRef = doc(db, "settings", "municipalities");
+      
+      await setDoc(municipalitiesDocRef, {
+        list: updatedMunicipalities,
+        updatedAt: new Date()
+      });
+
+      toast({
+        title: "Success",
+        description: `${municipalityToDelete} removed successfully`,
+      });
+    } catch (error) {
+      console.error("Error deleting municipality:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete municipality",
+        variant: "destructive",
+      });
+    }
   };
   
   const { data: users, loading: usersLoading, error: usersError } = useFirestoreCollection("users", [orderBy("createdAt", "desc")]);
@@ -114,6 +221,9 @@ export default function Analytics() {
   const junkShopOwners = users.filter(u => u.role === "junk_shop_owner" || u.role === "junkshop");
   const collectors = users.filter(u => u.role === "collector");
   
+  // Filter out admin users for statistics
+  const nonAdminUsers = users.filter(u => u.role !== "admin" && u.role !== "main_admin");
+  
   // Calculate total weight from actual estimatedWeight field in all bookings
   const totalWeight = bookings.reduce((sum, booking) => {
     const weight = parseFloat(booking.estimatedWeight) || 0;
@@ -126,7 +236,7 @@ export default function Analytics() {
     : 0;
 
   const analyticsStats = {
-    totalUsers: users.length,
+    totalUsers: nonAdminUsers.length,
     pickupsCompleted: completedBookings.length,
     totalWeight: Math.round(totalWeight),
     junkShops: junkShopOwners.length,
@@ -149,7 +259,7 @@ export default function Analytics() {
     });
 
     // Calculate user statistics by municipality
-    users.forEach(user => {
+    nonAdminUsers.forEach(user => {
       const municipality = user.municipality;
       if (municipality && municipalityStats[municipality]) {
         municipalityStats[municipality].totalUsers++;
@@ -324,6 +434,11 @@ export default function Analytics() {
     const municipalityUsers = users.filter(u => u.municipality === targetMunicipality);
     const participationByRole = {};
 
+    console.log(`👥 Participation for ${targetMunicipality}:`, {
+      totalUsers: municipalityUsers.length,
+      users: municipalityUsers.map(u => ({ id: u.id, role: u.role, municipality: u.municipality }))
+    });
+
     // Calculate participation by role for the selected municipality only - ensure all roles are included
     const roles = ['resident', 'collector', 'junkshop'];
     roles.forEach(role => {
@@ -331,6 +446,13 @@ export default function Analytics() {
       const activeRoleUsers = roleUsers.filter(user => {
         const userBookings = bookings.filter(b => b.customerId === user.id || b.userId === user.id);
         return userBookings.length > 0;
+      });
+
+      console.log(`  📊 ${role}:`, {
+        totalUsers: roleUsers.length,
+        activeUsers: activeRoleUsers.length,
+        participationRate: roleUsers.length > 0 ? 
+          Math.round((activeRoleUsers.length / roleUsers.length) * 100) : 0
       });
 
       participationByRole[role] = {
@@ -366,57 +488,93 @@ export default function Analytics() {
     // Initialize for all municipalities
     batangasMunicipalities.forEach(municipality => {
       municipalityMaterials[municipality] = {
-        materialCounts: {},
+        materialWeights: {}, // Stores weight by material type
         totalBookings: 0,
         topMaterial: null,
-        topMaterialCount: 0,
+        topMaterialWeight: 0,
         topMaterialPercentage: 0
       };
     });
 
-    // Count junk types by municipality from all bookings
-    bookings.forEach(booking => {
-      const municipality = booking.municipality || booking.pickupLocation?.municipality;
-      let junkType = null;
-      
-      // Check if junkType field exists
-      if (booking.junkType) {
-        junkType = booking.junkType.toLowerCase();
-      } 
-      // Extract material from notes field if junkType doesn't exist
-      else if (booking.notes) {
-        const materialMatch = booking.notes.match(/Material:\s*([^.]+)/i);
-        if (materialMatch) {
-          junkType = materialMatch[1].trim().toLowerCase();
-        }
-      }
-
-      if (municipality && junkType && municipalityMaterials[municipality]) {
-        // Clean up the junk type (remove words like "& ", "and", etc.)
-        const normalizedJunkType = junkType.replace(/\s*&\s*/g, ' ').replace(/\s+and\s+/g, ' ').split(' ')[0];
-        
-        if (!municipalityMaterials[municipality].materialCounts[normalizedJunkType]) {
-          municipalityMaterials[municipality].materialCounts[normalizedJunkType] = 0;
-        }
-        
-        municipalityMaterials[municipality].materialCounts[normalizedJunkType]++;
-        municipalityMaterials[municipality].totalBookings++;
-      }
+    console.log('🏘️ Processing bookings for municipalities:', {
+      totalBookings: bookings.length,
+      totalUsers: users.length
     });
 
-    // Find top material for each municipality
+    // Get bookings and extract municipality from booking or user
+    bookings.forEach(booking => {
+      // Try to get municipality from multiple sources
+      let municipality = booking.municipality;
+      
+      // If not in booking, get from user
+      if (!municipality) {
+        const user = users.find(u => u.id === booking.customerId || u.id === booking.userId);
+        municipality = user?.municipality;
+      }
+      
+      // Skip if no municipality found
+      if (!municipality || !municipalityMaterials[municipality]) {
+        return;
+      }
+      
+      // Get junk type from booking's junkType field
+      const junkType = booking.junkType;
+      
+      if (!junkType) {
+        return; // Skip if no junkType
+      }
+
+      // Get weight from booking
+      const weight = parseFloat(booking.estimatedWeight) || 0;
+
+      // Normalize the junk type to lowercase for consistent grouping
+      const normalizedJunkType = junkType.toLowerCase().trim();
+      
+      // Map to main categories
+      let categoryKey = null;
+      if (normalizedJunkType.includes('paper') || normalizedJunkType.includes('cardboard')) {
+        categoryKey = 'Paper';
+      } else if (normalizedJunkType.includes('plastic') || normalizedJunkType.includes('bottle')) {
+        categoryKey = 'Plastic';
+      } else if (normalizedJunkType.includes('metal') || normalizedJunkType.includes('aluminum') || 
+                 normalizedJunkType.includes('steel') || normalizedJunkType.includes('copper') || 
+                 normalizedJunkType.includes('can')) {
+        categoryKey = 'Metal';
+      } else if (normalizedJunkType.includes('glass')) {
+        categoryKey = 'Glass';
+      } else if (normalizedJunkType.includes('electronic')) {
+        categoryKey = 'Electronic';
+      } else {
+        // Everything else goes to "Other" category
+        categoryKey = 'Other';
+      }
+      
+      if (!municipalityMaterials[municipality].materialWeights[categoryKey]) {
+        municipalityMaterials[municipality].materialWeights[categoryKey] = 0;
+      }
+      
+      municipalityMaterials[municipality].materialWeights[categoryKey] += weight;
+      municipalityMaterials[municipality].totalBookings++;
+      
+      console.log(`  📍 ${municipality}: ${categoryKey} +${weight}kg (Total: ${municipalityMaterials[municipality].materialWeights[categoryKey]}kg)`);
+    });
+
+    // Find top material by weight for each municipality
     Object.keys(municipalityMaterials).forEach(municipality => {
       const data = municipalityMaterials[municipality];
       
       if (data.totalBookings > 0) {
-        const sortedMaterials = Object.entries(data.materialCounts)
+        const sortedMaterials = Object.entries(data.materialWeights)
           .sort(([,a], [,b]) => b - a);
         
         if (sortedMaterials.length > 0) {
-          const [topMaterial, count] = sortedMaterials[0];
-          data.topMaterial = topMaterial.charAt(0).toUpperCase() + topMaterial.slice(1);
-          data.topMaterialCount = count;
-          data.topMaterialPercentage = Math.round((count / data.totalBookings) * 100);
+          const [topMaterial, weight] = sortedMaterials[0];
+          const totalWeight = Object.values(data.materialWeights).reduce((sum, w) => sum + w, 0);
+          data.topMaterial = topMaterial;
+          data.topMaterialWeight = weight;
+          data.topMaterialPercentage = totalWeight > 0 ? Math.round((weight / totalWeight) * 100) : 0;
+          
+          console.log(`  ✅ ${municipality} top material: ${topMaterial} (${weight.toFixed(1)}kg, ${data.topMaterialPercentage}%)`);
         }
       }
     });
@@ -429,101 +587,93 @@ export default function Analytics() {
         ...data,
         // Add fallback display values for municipalities with no data
         displayMaterial: data.topMaterial || 'No data',
-        displayCount: data.topMaterialCount || 0,
+        displayWeight: data.topMaterialWeight || 0,
         displayPercentage: data.topMaterialPercentage || 0
       }));
   };
 
   // Get detailed material breakdown for a specific municipality
   const getMaterialBreakdownForMunicipality = (municipalityName) => {
-    // Define all possible material types - simplified to 5 main categories
-    const allMaterialTypes = {
-      'paper': 'Paper',
-      'plastic': 'Plastic',
-      'plastics': 'Plastic',
-      'metal': 'Metal',
-      'metals': 'Metal',
-      'glass': 'Glass',
-      'electronic': 'Electronic',
-      'electronics': 'Electronic'
+    // Define all possible material types - 6 main categories including Other
+    const materialData = {
+      'Paper': { count: 0, weight: 0 },
+      'Plastic': { count: 0, weight: 0 },
+      'Metal': { count: 0, weight: 0 },
+      'Glass': { count: 0, weight: 0 },
+      'Electronic': { count: 0, weight: 0 },
+      'Other': { count: 0, weight: 0 }
     };
 
-    const materialData = {};
     let totalWeight = 0;
 
-    // Initialize only the 5 main material types with 0 weight
-    const mainCategories = ['paper', 'plastic', 'metal', 'glass', 'electronic'];
-    mainCategories.forEach(material => {
-      materialData[material] = { count: 0, weight: 0 };
+    console.log(`🔍 Material Breakdown for ${municipalityName}:`, {
+      totalBookings: bookings.length,
+      totalUsers: users.length
     });
 
     // Calculate weight for all materials for this municipality
     bookings.forEach(booking => {
-      const municipality = booking.municipality || booking.pickupLocation?.municipality;
-      let junkType = null;
+      // Try to get municipality from booking first, then from user
+      let municipality = booking.municipality;
       
-      // Check if junkType field exists
-      if (booking.junkType) {
-        junkType = booking.junkType.toLowerCase();
-      } 
-      // Extract material from notes field if junkType doesn't exist
-      else if (booking.notes) {
-        const materialMatch = booking.notes.match(/Material:\s*([^.]+)/i);
-        if (materialMatch) {
-          junkType = materialMatch[1].trim().toLowerCase();
-        }
+      if (!municipality) {
+        const user = users.find(u => u.id === booking.customerId || u.id === booking.userId);
+        municipality = user?.municipality;
+      }
+      
+      if (!municipality || municipality !== municipalityName) {
+        return; // Skip if not from target municipality
+      }
+      
+      // Get junk type from booking's junkType field
+      const junkType = booking.junkType;
+      
+      if (!junkType) {
+        return; // Skip if no junkType
       }
 
-      if (municipality === municipalityName && junkType) {
-        const weight = parseFloat(booking.estimatedWeight) || 0;
-        
-        // Clean up the junk type (remove words like "& ", "and", etc.)
-        const normalizedJunkType = junkType.replace(/\s*&\s*/g, ' ').replace(/\s+and\s+/g, ' ').split(' ')[0];
-        
-        // Map to main categories only
-        let categoryKey = null;
-        if (normalizedJunkType.includes('paper') || normalizedJunkType.includes('cardboard')) {
-          categoryKey = 'paper';
-        } else if (normalizedJunkType.includes('plastic') || normalizedJunkType.includes('bottle')) {
-          categoryKey = 'plastic';
-        } else if (normalizedJunkType.includes('metal') || normalizedJunkType.includes('aluminum') || 
-                   normalizedJunkType.includes('steel') || normalizedJunkType.includes('copper') || 
-                   normalizedJunkType.includes('can')) {
-          categoryKey = 'metal';
-        } else if (normalizedJunkType.includes('glass')) {
-          categoryKey = 'glass';
-        } else if (normalizedJunkType.includes('electronic')) {
-          categoryKey = 'electronic';
-        }
-        
-        if (categoryKey && materialData[categoryKey]) {
-          materialData[categoryKey].count++;
-          materialData[categoryKey].weight += weight;
-          totalWeight += weight;
-        }
+      const weight = parseFloat(booking.estimatedWeight) || 0;
+      const normalizedJunkType = junkType.toLowerCase().trim();
+      
+      console.log(`  📦 Booking:`, {
+        junkType,
+        weight,
+        municipality,
+        estimatedWeight: booking.estimatedWeight
+      });
+      
+      // Map to main categories
+      let categoryKey = null;
+      if (normalizedJunkType.includes('paper') || normalizedJunkType.includes('cardboard')) {
+        categoryKey = 'Paper';
+      } else if (normalizedJunkType.includes('plastic') || normalizedJunkType.includes('bottle')) {
+        categoryKey = 'Plastic';
+      } else if (normalizedJunkType.includes('metal') || normalizedJunkType.includes('aluminum') || 
+                 normalizedJunkType.includes('steel') || normalizedJunkType.includes('copper') || 
+                 normalizedJunkType.includes('can')) {
+        categoryKey = 'Metal';
+      } else if (normalizedJunkType.includes('glass')) {
+        categoryKey = 'Glass';
+      } else if (normalizedJunkType.includes('electronic')) {
+        categoryKey = 'Electronic';
+      } else {
+        // Everything else goes to "Other" category
+        categoryKey = 'Other';
       }
-    });
-
-    // Combine similar materials - now just maps to display names
-    const combinedData = {};
-    const displayNames = {
-      'paper': 'Paper',
-      'plastic': 'Plastic',
-      'metal': 'Metal',
-      'glass': 'Glass',
-      'electronic': 'Electronic'
-    };
-    
-    Object.entries(materialData).forEach(([material, data]) => {
-      const displayName = displayNames[material];
-      if (displayName) {
-        combinedData[displayName] = { count: data.count, weight: data.weight };
+      
+      if (categoryKey && materialData[categoryKey]) {
+        materialData[categoryKey].count++;
+        materialData[categoryKey].weight += weight;
+        totalWeight += weight;
       }
     });
 
-    // Convert to array with weights and percentages - keep all 5 categories
-    return ['Paper', 'Plastic', 'Metal', 'Glass', 'Electronic'].map(materialName => {
-      const data = combinedData[materialName] || { count: 0, weight: 0 };
+    console.log(`  ✅ Total weight calculated:`, totalWeight, 'kg');
+    console.log(`  📊 Material data:`, materialData);
+
+    // Convert to array with weights and percentages - keep all 6 categories
+    return ['Paper', 'Plastic', 'Metal', 'Glass', 'Electronic', 'Other'].map(materialName => {
+      const data = materialData[materialName];
       return {
         material: materialName,
         count: data.count,
@@ -767,13 +917,14 @@ export default function Analytics() {
       }
     });
     
-    // Map junk types to 5 main categories with colors
+    // Map junk types to 6 main categories with colors
     const mainCategories = {
       'Paper': { color: "#22c55e", count: 0 },
       'Plastic': { color: "#3b82f6", count: 0 },
       'Metal': { color: "#f59e0b", count: 0 },
       'Glass': { color: "#8b5cf6", count: 0 },
-      'Electronic': { color: "#ef4444", count: 0 }
+      'Electronic': { color: "#ef4444", count: 0 },
+      'Other': { color: "#64748b", count: 0 }
     };
     
     // Aggregate counts into main categories
@@ -789,6 +940,9 @@ export default function Analytics() {
         mainCategories['Glass'].count += count;
       } else if (type.includes('electronic')) {
         mainCategories['Electronic'].count += count;
+      } else {
+        // Everything else goes to "Other" category
+        mainCategories['Other'].count += count;
       }
     });
     
@@ -813,9 +967,16 @@ export default function Analytics() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold mb-1">Platform Analytics</h1>
+                <h1 className="text-3xl font-bold mb-2">Platform Analytics</h1>
                 <p className="text-green-100">Comprehensive insights and performance metrics</p>
               </div>
+              <Button
+                onClick={() => setIsMunicipalityModalOpen(true)}
+                className="bg-white/20 text-white hover:bg-white/30"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Manage Municipalities
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -1018,8 +1179,7 @@ export default function Analytics() {
                           >
                             <span className="text-sm font-medium">{municipality}</span>
                             <div className="text-right">
-                              <span className="text-sm font-bold text-green-600">{data.activeUsers} active</span>
-                              <div className="text-xs text-gray-500">{data.totalUsers} total users</div>
+                              <span className="text-sm font-bold text-green-600">{data.totalUsers} users</span>
                             </div>
                           </div>
                         ))
@@ -1073,7 +1233,10 @@ export default function Analytics() {
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-gray-100 text-gray-500'
                     }`}>
-                      {data.displayMaterial}
+                      {data.displayWeight > 0 
+                        ? `${data.displayMaterial} - ${data.displayWeight.toFixed(1)} kg`
+                        : data.displayMaterial
+                      }
                     </span>
                   </div>
                 ))}
@@ -1097,21 +1260,12 @@ export default function Analytics() {
           </DialogHeader>
           <div className="space-y-3 mt-4">
             {Object.entries(participationRates.byRole)
-              .sort(([,a], [,b]) => b.participationRate - a.participationRate)
+              .sort(([,a], [,b]) => b.totalUsers - a.totalUsers)
               .map(([role, data]) => (
                 <div key={role} className="space-y-1">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium capitalize">{role.replace('_', ' ')}</span>
-                    <span className="text-sm font-bold">{data.participationRate}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all duration-300" 
-                      style={{ width: `${data.participationRate}%` }}
-                    ></div>
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {data.activeUsers} active of {data.totalUsers} total users
+                    <span className="text-lg font-bold text-green-600">{data.totalUsers} users</span>
                   </div>
                 </div>
               ))
@@ -1134,7 +1288,7 @@ export default function Analytics() {
           </DialogHeader>
           <div className="space-y-3 mt-4">
             {selectedMaterialsMunicipality && getMaterialBreakdownForMunicipality(selectedMaterialsMunicipality).map((material, index) => (
-              <div key={material.material} className="space-y-2">
+              <div key={material.material} className="space-y-1">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">{material.material}</span>
                   <div className="text-right">
@@ -1143,16 +1297,69 @@ export default function Analytics() {
                     </div>
                   </div>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      material.weight > 0 ? 'bg-gradient-to-r from-green-500 to-emerald-500' : 'bg-gray-300'
-                    }`} 
-                    style={{ width: `${material.percentage}%` }}
-                  ></div>
-                </div>
               </div>
             ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Municipality Management Dialog */}
+      <Dialog open={isMunicipalityModalOpen} onOpenChange={setIsMunicipalityModalOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Package className="h-5 w-5 mr-2 text-green-600" />
+              Manage Municipalities
+            </DialogTitle>
+          </DialogHeader>
+          
+          {/* Add Municipality Form */}
+          <div className="space-y-4 border-b pb-4">
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <Label htmlFor="newMunicipality">Add New Municipality</Label>
+                <Input
+                  id="newMunicipality"
+                  value={newMunicipality}
+                  onChange={(e) => setNewMunicipality(e.target.value)}
+                  placeholder="Enter municipality name"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleAddMunicipality();
+                    }
+                  }}
+                />
+              </div>
+              <Button 
+                onClick={handleAddMunicipality}
+                className="mt-6"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add
+              </Button>
+            </div>
+          </div>
+
+          {/* Municipality List */}
+          <div className="space-y-2">
+            <Label>Current Municipalities ({municipalities.length})</Label>
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {municipalities.map((municipality) => (
+                <div 
+                  key={municipality}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <span className="font-medium">{municipality}</span>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDeleteMunicipality(municipality)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
           </div>
         </DialogContent>
       </Dialog>

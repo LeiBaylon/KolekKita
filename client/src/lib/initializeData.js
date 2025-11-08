@@ -23,6 +23,7 @@ export const initializeFirebaseData = async (currentUserId) => {
         email: "admin@kolekita.com",
         name: "System Admin",
         role: "admin",
+        municipality: "Batangas City",
         profilePhoto: null,
         phone: "+62812345678",
         isActive: true,
@@ -33,6 +34,7 @@ export const initializeFirebaseData = async (currentUserId) => {
         email: "shop@kolekita.com", 
         name: "Jakarta Recycling Center",
         role: "junk_shop_owner",
+        municipality: "Batangas City",
         profilePhoto: null,
         phone: "+62812345679",
         isActive: true,
@@ -42,7 +44,8 @@ export const initializeFirebaseData = async (currentUserId) => {
       {
         email: "collector@kolekita.com",
         name: "Budi Collector",
-        role: "collector", 
+        role: "collector",
+        municipality: "Lipa City",
         profilePhoto: null,
         phone: "+62812345680",
         isActive: true,
@@ -52,7 +55,8 @@ export const initializeFirebaseData = async (currentUserId) => {
       {
         email: "resident1@kolekita.com",
         name: "Sari Resident",
-        role: "resident", 
+        role: "resident",
+        municipality: "Tanauan City",
         profilePhoto: null,
         phone: "+62812345681",
         isActive: true,
@@ -62,7 +66,8 @@ export const initializeFirebaseData = async (currentUserId) => {
       {
         email: "collector2@kolekita.com",
         name: "Andi Collector",
-        role: "collector", 
+        role: "collector",
+        municipality: "Lemery",
         profilePhoto: null,
         phone: "+62812345682",
         isActive: true,
@@ -73,6 +78,7 @@ export const initializeFirebaseData = async (currentUserId) => {
         email: "shop2@kolekita.com",
         name: "Surabaya Waste Center",
         role: "junk_shop_owner",
+        municipality: "Balayan",
         profilePhoto: null,
         phone: "+62812345683",
         isActive: true,
@@ -95,9 +101,11 @@ export const initializeFirebaseData = async (currentUserId) => {
         collectorId: userIds[2],
         pickupLocation: "Jl. Sudirman No. 123, Jakarta",
         dropoffLocation: "Jakarta Recycling Center",
+        municipality: "Batangas City", // Add municipality
         scheduledTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // Tomorrow
         status: "pending",
         notes: "Material: Electronics. Estimated weight: 15kg. Old laptop and printer",
+        junkType: "electronics", // Add junkType
         estimatedWeight: 15,
         photos: [],
         pickupCoords: { latitude: -6.2088, longitude: 106.8456 },
@@ -111,10 +119,12 @@ export const initializeFirebaseData = async (currentUserId) => {
         customerId: currentUserId,
         collectorId: userIds[2],
         pickupLocation: "Jl. Thamrin No. 456, Jakarta",
-        dropoffLocation: "Jakarta Recycling Center", 
+        dropoffLocation: "Jakarta Recycling Center",
+        municipality: "Batangas City", // Add municipality
         scheduledTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // Day after tomorrow
         status: "assigned",
         notes: "Material: Paper & Cardboard. Estimated weight: 25kg. Newspaper and cardboard boxes",
+        junkType: "paper", // Add junkType
         estimatedWeight: 25,
         photos: [],
         pickupCoords: { latitude: -6.1944, longitude: 106.8229 },
@@ -129,9 +139,11 @@ export const initializeFirebaseData = async (currentUserId) => {
         collectorId: userIds[2],
         pickupLocation: "Jl. Gatot Subroto No. 789, Jakarta",
         dropoffLocation: "Jakarta Recycling Center",
+        municipality: "Tanauan City", // Add municipality
         scheduledTime: new Date(Date.now() - 24 * 60 * 60 * 1000), // Yesterday
         status: "completed",
         notes: "Material: Mixed metals. Estimated weight: 20kg. Old furniture and appliances",
+        junkType: "metal", // Add junkType
         estimatedWeight: 20,
         photos: [],
         pickupCoords: { latitude: -6.2297, longitude: 106.8253 },
@@ -146,9 +158,11 @@ export const initializeFirebaseData = async (currentUserId) => {
         collectorId: userIds[4], // Different collector
         pickupLocation: "Jl. Kuningan No. 321, Jakarta",
         dropoffLocation: "Surabaya Waste Center",
+        municipality: "Lemery", // Add municipality
         scheduledTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
         status: "pending",
         notes: "Material: Plastic containers. Estimated weight: 10kg",
+        junkType: "plastic", // Add junkType
         estimatedWeight: 10,
         photos: [],
         pickupCoords: { latitude: -6.2297, longitude: 106.8253 },
@@ -156,6 +170,25 @@ export const initializeFirebaseData = async (currentUserId) => {
         completedTime: null,
         price: 25000,
         createdAt: createDateMonthsAgo(0, 20), // This month
+        updatedAt: new Date(),
+      },
+      {
+        customerId: currentUserId,
+        collectorId: userIds[2],
+        pickupLocation: "Jl. Manila No. 555, Jakarta",
+        dropoffLocation: "Jakarta Recycling Center",
+        municipality: "Batangas City", // Add municipality
+        scheduledTime: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
+        status: "pending",
+        notes: "Material: Other miscellaneous items. Estimated weight: 8kg. Mixed recyclables",
+        junkType: "other", // Add junkType
+        estimatedWeight: 8,
+        photos: [],
+        pickupCoords: { latitude: -6.2088, longitude: 106.8456 },
+        dropoffCoords: { latitude: -6.1751, longitude: 106.8650 },
+        completedTime: null,
+        price: 20000,
+        createdAt: createDateMonthsAgo(0, 25), // This month
         updatedAt: new Date(),
       }
     ];

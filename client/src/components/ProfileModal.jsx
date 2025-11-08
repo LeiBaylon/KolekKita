@@ -327,12 +327,6 @@ export const ProfileModal = ({ isOpen, onClose }) => {
                   </div>
 
                   <div className="h-px bg-gray-200 my-3" />
-
-                  <div className="text-center py-4">
-                    <p className="text-sm text-muted-foreground">
-                      Account settings and preferences will be available here.
-                    </p>
-                  </div>
                 </div>
               </CardContent>
             </Card>

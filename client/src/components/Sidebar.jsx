@@ -14,7 +14,8 @@ import {
   BarChart3,
   X,
   Menu,
-  Bell
+  Bell,
+  Crown
 } from "lucide-react";
 
 
@@ -26,11 +27,22 @@ const getMenuItems = () => [
   { id: "verification", label: "Verification", icon: CheckCircle, path: "/verification" },
   { id: "notifications", label: "Notifications", icon: Bell, path: "/notifications" },
   { id: "moderation", label: "Moderation", icon: Shield, path: "/moderation" },
+  { id: "admin-management", label: "Admin Management", icon: Crown, path: "/admin-management", mainAdminOnly: true },
 ];
 
 export const Sidebar = ({ isOpen, onClose }) => {
   const { user, switchRole } = useAuth();
   const [location] = useLocation();
+
+  // Check if user is main admin
+  const isMainAdmin = user?.isMainAdmin === true || user?.role === "main_admin";
+
+  console.log("👤 Sidebar - User check:", {
+    email: user?.email,
+    role: user?.role,
+    isMainAdmin: user?.isMainAdmin,
+    calculated_isMainAdmin: isMainAdmin
+  });
 
   // Get real-time data for admin notifications (only if user is authenticated)
   const { data: verifications } = useFirestoreCollection("verifications", []);
@@ -40,7 +52,13 @@ export const Sidebar = ({ isOpen, onClose }) => {
     switchRole(role);
   };
 
-  const menuItems = getMenuItems();
+  const menuItems = getMenuItems().filter(item => {
+    // Filter out main admin only items if user is not main admin
+    if (item.mainAdminOnly && !isMainAdmin) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <>

@@ -71,9 +71,20 @@ export default function Verification() {
     console.log('  - loading:', loading);
     console.log('  - error:', error);
     
-    // Log individual items
+    // Log individual items with their shopName field
     if (allVerifications.length > 0) {
       console.log('  - First verification:', allVerifications[0]);
+      allVerifications.forEach((v, index) => {
+        console.log(`  - Verification ${index}:`, {
+          id: v.id,
+          shopName: v.shopName,
+          businessName: v.businessName,
+          name: v.name,
+          junkshopName: v.junkshopName,
+          status: v.status,
+          allFields: Object.keys(v)
+        });
+      });
     }
   }, [allVerifications, loading, error]);
   
@@ -86,6 +97,8 @@ export default function Verification() {
     createdAt: verification.createdAt || verification.submissionTimestamp || verification.uploadedAt,
     // Ensure we have submission timestamp
     submissionTimestamp: verification.submissionTimestamp || verification.createdAt || verification.uploadedAt,
+    // Map shop name from various possible fields
+    shopName: verification.shopName || verification.businessName || verification.name || verification.junkshopName,
     // Map document fields properly
     documentType: verification.documentType || "PhilSys ID",
     documentURL: verification.documentURL || verification.documentUrl,
@@ -292,8 +305,9 @@ export default function Verification() {
                           )}
                         </div>
                         <div className="flex-1">
-                          <h3 className="text-lg font-semibold">{verification.shopName || 'Junk Shop Verification'}</h3>
-                          <p className="text-sm text-gray-600">Document: {verification.documentType || 'Unknown Document'}</p>
+                          <h3 className="text-lg font-semibold">
+                            {verification.shopName || verification.businessName || verification.name || verification.junkshopName || 'Junk Shop Verification'}
+                          </h3>
                           <div className="flex items-center space-x-4 text-gray-600 text-sm mt-2">
                             <span className="flex items-center space-x-1">
                               <Calendar className="h-4 w-4" />
@@ -304,16 +318,6 @@ export default function Verification() {
                                   : 'Recently'}</span>
                             </span>
                           </div>
-                          {verification.rejectionReason && (
-                            <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-700">
-                              <strong>Rejection Reason:</strong> {verification.rejectionReason}
-                            </div>
-                          )}
-                          {verification.adminNotes && verification.adminNotes !== verification.rejectionReason && (
-                            <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-700">
-                              <strong>Admin Notes:</strong> {verification.adminNotes}
-                            </div>
-                          )}
                         </div>
                       </div>
                       <div className="flex space-x-2">

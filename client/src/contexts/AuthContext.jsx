@@ -3,17 +3,19 @@ import {
   signInWithEmailAndPassword, 
   signOut, 
   onAuthStateChanged,
-  createUserWithEmailAndPassword
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider
 } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { validatePassword } from "@/utils/passwordValidation";
 
-const AuthContext = createContext(undefined);
+const AuthContext = createContext(null);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
@@ -32,7 +34,14 @@ export const AuthProvider = ({ children }) => {
         try {
           const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
           if (userDoc.exists()) {
-            setUser({ id: firebaseUser.uid, ...userDoc.data() });
+            const userData = { id: firebaseUser.uid, ...userDoc.data() };
+            console.log("🔐 User logged in:", {
+              email: userData.email,
+              role: userData.role,
+              isMainAdmin: userData.isMainAdmin,
+              fullData: userData
+            });
+            setUser(userData);
           } else {
             // Create user document if it doesn't exist
             const newUser = {
@@ -63,6 +72,21 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     await signInWithEmailAndPassword(auth, email, password);
+  };
+
+  const loginWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    
+    // Check if user exists in Firestore
+    const userDoc = await getDoc(doc(db, "users", result.user.uid));
+    if (!userDoc.exists()) {
+      // Sign out the user immediately if they don't have an existing account
+      await signOut(auth);
+      throw new Error("No existing account found. Please contact an administrator to create an account.");
+    }
+    
+    return result;
   };
 
   const logout = async () => {
@@ -109,6 +133,7 @@ export const AuthProvider = ({ children }) => {
     firebaseUser,
     loading,
     login,
+    loginWithGoogle,
     logout,
     register,
     switchRole,

@@ -245,7 +245,7 @@ export default function Notifications() {
           <CardContent className="p-0">
             {error && (
               <div className="text-red-500 text-sm p-6">
-                Error loading campaigns: {error}
+                Error loading campaigns: {String(error?.message || error)}
               </div>
             )}
             
