@@ -307,16 +307,6 @@ export default function Moderation() {
                 <h1 className="text-3xl font-bold mb-2">Content Moderation</h1>
                 <p className="text-green-100">Review reports, reviews, and manage platform content</p>
               </div>
-              <div className="flex items-center space-x-3">
-                <Button 
-                  variant="secondary" 
-                  size="sm" 
-                  className="bg-white text-green-600 hover:bg-white/90"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Manage Municipalities
-                </Button>
-              </div>
             </div>
           </CardContent>
         </Card>
