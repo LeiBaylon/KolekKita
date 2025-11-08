@@ -126,7 +126,7 @@ export class NotificationService {
    * @param {Object} data - Additional data
    * @returns {Promise<number>} - Number of notifications sent
    */
-  static async sendNotificationToAllUsers(title, message, type = this.NotificationTypes.ANNOUNCEMENT, data = {}) {
+  static async sendNotificationToAllUsers(title, message, type = this.NotificationTypes.ANNOUNCEMENT, data = {}, userTypeFilter = 'all') {
     const operationId = `${title}-${type}-${JSON.stringify(data.sendId || '')}`;
     
     // Check if this exact operation was performed recently (within 5 seconds)
@@ -147,6 +147,7 @@ export class NotificationService {
         title, 
         type, 
         operationId,
+        userTypeFilter,
         timestamp: new Date().toISOString() 
       });
       
@@ -163,7 +164,18 @@ export class NotificationService {
       const allUsers = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
       // Exclude admins from receiving notifications
-      const users = allUsers.filter(u => u.role !== 'admin');
+      let users = allUsers.filter(u => u.role !== 'admin');
+      
+      // Filter by user type if specified
+      if (userTypeFilter && userTypeFilter !== 'all') {
+        if (userTypeFilter === 'resident') {
+          users = users.filter(u => u.role === 'customer' || u.role === 'resident');
+        } else if (userTypeFilter === 'collector') {
+          users = users.filter(u => u.role === 'collector');
+        } else if (userTypeFilter === 'junkshop') {
+          users = users.filter(u => u.role === 'junk_shop_owner' || u.role === 'junkshop');
+        }
+      }
       const userIds = users.map(user => user.id);
       
       // Categorize users by role (admins excluded)

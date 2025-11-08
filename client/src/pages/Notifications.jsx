@@ -20,6 +20,7 @@ export default function Notifications() {
   const [notificationTitle, setNotificationTitle] = useState("");
   const [notificationMessage, setNotificationMessage] = useState("");
   const [notificationType, setNotificationType] = useState(NotificationService.NotificationTypes.SYSTEM);
+  const [targetUserType, setTargetUserType] = useState("all"); // New state for user type filter
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastSentId, setLastSentId] = useState(null); // Prevent duplicate sends
   const [selectedMessage, setSelectedMessage] = useState(null); // For message dialog
@@ -131,19 +132,26 @@ export default function Notifications() {
           sentBy: user?.uid || 'anonymous',
           sentByName: user?.displayName || user?.email || 'Anonymous User',
           operationId
-        }
+        },
+        targetUserType // Pass the selected user type filter
       );
 
       if (result.success) {
+        const userTypeLabel = targetUserType === 'all' ? 'all users' : 
+                              targetUserType === 'resident' ? 'residents' :
+                              targetUserType === 'collector' ? 'collectors' :
+                              targetUserType === 'junkshop' ? 'junk shops' : 'users';
+        
         toast({
           title: "Notification Sent!",
-          description: `Successfully sent to ${result.sentCount} users`,
+          description: `Successfully sent to ${result.sentCount} ${userTypeLabel}`,
         });
         
         // Reset form
         setNotificationTitle("");
         setNotificationMessage("");
         setNotificationType(NotificationService.NotificationTypes.SYSTEM);
+        setTargetUserType("all");
         setIsSendDialogOpen(false);
       } else {
         throw new Error(result.error || 'Failed to send notification');
@@ -191,10 +199,24 @@ export default function Notifications() {
                     <DialogHeader>
                       <DialogTitle>Send New Notification</DialogTitle>
                       <DialogDescription>
-                        Send a notification to all users in the system
+                        Send a notification to users in the system
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="userType">Send To</Label>
+                        <Select value={targetUserType} onValueChange={setTargetUserType}>
+                          <SelectTrigger id="userType">
+                            <SelectValue placeholder="Select user type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Users</SelectItem>
+                            <SelectItem value="resident">Residents</SelectItem>
+                            <SelectItem value="collector">Collectors</SelectItem>
+                            <SelectItem value="junkshop">Junk Shops</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <div>
                         <Label htmlFor="title">Title</Label>
                         <Input

@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { where } from "firebase/firestore";
 import { Shield, UserPlus, Trash2, Crown, AlertTriangle } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { isMainAdmin, canDeleteUser } from "@/utils/setupMainAdmin";
 import { validatePassword } from "@/utils/passwordValidation";
 import { createAdminWithoutSignIn } from "@/utils/createAdminWithoutSignIn";
@@ -233,13 +234,16 @@ export default function AdminManagement() {
                     className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
                   >
                     <div className="flex items-center space-x-4">
-                      <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
-                        {admin.isMainAdmin ? (
-                          <Crown className="h-6 w-6 text-green-600" />
-                        ) : (
-                          <Shield className="h-6 w-6 text-green-600" />
-                        )}
-                      </div>
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={admin.profilePhoto || undefined} />
+                        <AvatarFallback className="bg-green-100 text-green-600">
+                          {admin.isMainAdmin ? (
+                            <Crown className="h-6 w-6" />
+                          ) : (
+                            admin.name?.charAt(0)?.toUpperCase() || "A"
+                          )}
+                        </AvatarFallback>
+                      </Avatar>
                       <div>
                         <div className="flex items-center space-x-2">
                           <h3 className="font-semibold">{admin.name}</h3>
