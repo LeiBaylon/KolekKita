@@ -10,6 +10,7 @@ import {
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { validatePassword } from "@/utils/passwordValidation";
+import PushNotificationService from "@/services/pushNotificationService";
 
 const AuthContext = createContext(null);
 
@@ -42,6 +43,14 @@ export const AuthProvider = ({ children }) => {
               fullData: userData
             });
             setUser(userData);
+            
+            // Request push notification permission after login (only for non-admin users)
+            if (userData.role !== 'admin') {
+              setTimeout(() => {
+                PushNotificationService.requestPermissionAndGetToken(firebaseUser.uid)
+                  .catch(error => console.error('Error setting up push notifications:', error));
+              }, 2000); // Delay to avoid overwhelming the user on login
+            }
           } else {
             // Create user document if it doesn't exist
             const newUser = {
@@ -90,6 +99,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    // Remove FCM token before logout
+    if (firebaseUser?.uid) {
+      await PushNotificationService.removeFCMToken(firebaseUser.uid);
+    }
     await signOut(auth);
   };
 

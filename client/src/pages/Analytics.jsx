@@ -12,8 +12,9 @@ import { useToast } from "@/hooks/use-toast";
 import { orderBy, doc, setDoc, getDoc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { TrendingUp, Users, Activity, ArrowUpIcon, Package, Recycle, Calendar, BarChart3, PieChart as PieChartIcon, TrendingDown, Star, X, Plus, Trash2 } from "lucide-react";
+import { TrendingUp, Users, Activity, ArrowUpIcon, Package, Recycle, Calendar, BarChart3, PieChart as PieChartIcon, TrendingDown, Star, X, Plus, Trash2, Pencil, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { analyticsService } from "@/services/analyticsService";
 
 export default function Analytics() {
   const [dateRange, setDateRange] = useState("7days");
@@ -26,7 +27,26 @@ export default function Analytics() {
   const [newMunicipality, setNewMunicipality] = useState("");
   const [municipalities, setMunicipalities] = useState([]);
   const [loadingMunicipalities, setLoadingMunicipalities] = useState(true);
+  const [editingMunicipality, setEditingMunicipality] = useState(null);
+  const [editedMunicipalityName, setEditedMunicipalityName] = useState("");
+  const [selectedMunicipalityForBreakdown, setSelectedMunicipalityForBreakdown] = useState(null);
+  const [isMunicipalityBreakdownModalOpen, setIsMunicipalityBreakdownModalOpen] = useState(false);
+  const [selectedMaterialMunicipality, setSelectedMaterialMunicipality] = useState(null);
+  const [isMaterialBreakdownModalOpen, setIsMaterialBreakdownModalOpen] = useState(false);
   const { toast } = useToast();
+  
+  // Analytics data state
+  const [loading, setLoading] = useState(true);
+  const [monthlyData, setMonthlyData] = useState([]);
+  const [materialData, setMaterialData] = useState({});
+  const [municipalityActivity, setMunicipalityActivity] = useState([]);
+  const [popularMaterials, setPopularMaterials] = useState([]);
+  const [totalStats, setTotalStats] = useState({
+    totalUsers: 0,
+    totalBookings: 0,
+    completedBookings: 0,
+    totalWeight: 0
+  });
   
   // Batangas municipalities list (use state instead)
   const batangasMunicipalities = municipalities;
@@ -68,6 +88,53 @@ export default function Analytics() {
 
     return () => unsubscribe();
   }, [toast]);
+  
+  // Fetch all analytics data
+  useEffect(() => {
+    fetchAnalyticsData();
+  }, []);
+
+  const fetchAnalyticsData = async () => {
+    setLoading(true);
+    console.log('🔄 Starting analytics data fetch...');
+    try {
+      const [monthly, materials, municipality, popular, stats] = await Promise.all([
+        analyticsService.getMonthlyCollectionData(),
+        analyticsService.getMaterialDistribution(),
+        analyticsService.getMunicipalityActivity(),
+        analyticsService.getPopularMaterialsByMunicipality(),
+        analyticsService.getTotalStats()
+      ]);
+
+      console.log('✅ Analytics data fetched successfully:', {
+        monthly,
+        materials,
+        municipality,
+        popular,
+        stats
+      });
+
+      setMonthlyData(monthly);
+      setMaterialData(materials);
+      setMunicipalityActivity(municipality);
+      setPopularMaterials(popular);
+      setTotalStats(stats);
+      
+      toast({
+        title: "Success",
+        description: "Analytics data loaded successfully",
+      });
+    } catch (error) {
+      console.error('❌ Error fetching analytics:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load analytics data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
   
   // Helper function to safely convert timestamps to Date objects
   const getValidDate = (timestamp) => {
@@ -164,6 +231,70 @@ export default function Analytics() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleEditMunicipality = (municipality) => {
+    setEditingMunicipality(municipality);
+    setEditedMunicipalityName(municipality);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editedMunicipalityName.trim()) {
+      toast({
+        title: "Error",
+        description: "Municipality name cannot be empty",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (editedMunicipalityName.trim() === editingMunicipality) {
+      setEditingMunicipality(null);
+      setEditedMunicipalityName("");
+      return;
+    }
+
+    if (municipalities.includes(editedMunicipalityName.trim())) {
+      toast({
+        title: "Error",
+        description: "Municipality already exists",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const updatedMunicipalities = municipalities.map(m => 
+        m === editingMunicipality ? editedMunicipalityName.trim() : m
+      ).sort();
+      
+      const municipalitiesDocRef = doc(db, "settings", "municipalities");
+      
+      await setDoc(municipalitiesDocRef, {
+        list: updatedMunicipalities,
+        updatedAt: new Date()
+      });
+
+      setEditingMunicipality(null);
+      setEditedMunicipalityName("");
+      
+      toast({
+        title: "Success",
+        description: `Municipality updated successfully`,
+      });
+    } catch (error) {
+      console.error("Error updating municipality:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update municipality",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMunicipality(null);
+    setEditedMunicipalityName("");
   };
   
   const { data: users, loading: usersLoading, error: usersError } = useFirestoreCollection("users", [orderBy("createdAt", "desc")]);
@@ -648,16 +779,13 @@ export default function Analytics() {
         categoryKey = 'Paper';
       } else if (normalizedJunkType.includes('plastic') || normalizedJunkType.includes('bottle')) {
         categoryKey = 'Plastic';
-      } else if (normalizedJunkType.includes('metal') || normalizedJunkType.includes('aluminum') || 
-                 normalizedJunkType.includes('steel') || normalizedJunkType.includes('copper') || 
-                 normalizedJunkType.includes('can')) {
+      } else if (normalizedJunkType.includes('metal') || normalizedJunkType.includes('aluminum') || normalizedJunkType.includes('steel') || normalizedJunkType.includes('iron')) {
         categoryKey = 'Metal';
       } else if (normalizedJunkType.includes('glass')) {
         categoryKey = 'Glass';
-      } else if (normalizedJunkType.includes('electronic')) {
+      } else if (normalizedJunkType.includes('electronic') || normalizedJunkType.includes('e-waste') || normalizedJunkType.includes('ewaste')) {
         categoryKey = 'Electronic';
       } else {
-        // Everything else goes to "Other" category
         categoryKey = 'Other';
       }
       
@@ -681,6 +809,32 @@ export default function Analytics() {
         percentage: totalWeight > 0 ? Math.round((data.weight / totalWeight) * 100) : 0
       };
     });
+  };
+
+  // Get user breakdown for a specific municipality
+  const getMunicipalityUserBreakdown = (municipalityName) => {
+    const municipalityUsers = users.filter(u => u.municipality === municipalityName);
+    
+    const breakdown = {
+      residents: municipalityUsers.filter(u => u.role === 'resident' || u.role === 'user' || !u.role).length,
+      collectors: municipalityUsers.filter(u => u.role === 'collector').length,
+      junkshops: municipalityUsers.filter(u => u.role === 'junk_shop_owner' || u.role === 'junkshop').length,
+      total: municipalityUsers.length
+    };
+
+    return breakdown;
+  };
+
+  // Handle municipality click to show breakdown
+  const handleMunicipalityClick = (municipalityName) => {
+    setSelectedMunicipalityForBreakdown(municipalityName);
+    setIsMunicipalityBreakdownModalOpen(true);
+  };
+
+  // Handle material municipality click to show material breakdown
+  const handleMaterialMunicipalityClick = (municipalityName) => {
+    setSelectedMaterialMunicipality(municipalityName);
+    setIsMaterialBreakdownModalOpen(true);
   };
 
   // Generate analytics data
@@ -888,77 +1042,6 @@ export default function Analytics() {
       .slice(-6); // Show last 6 months
   })();
 
-  // Material distribution - based on actual junk types from bookings
-  const materialData = (() => {
-    if (bookings.length === 0) return [];
-    
-    // Count actual junk types from all bookings (use all bookings, not just filtered)
-    const junkTypeCounts = {};
-    
-    bookings.forEach(booking => {
-      let junkType = null;
-      
-      // Check if junkType field exists
-      if (booking.junkType) {
-        junkType = booking.junkType.toLowerCase();
-      } 
-      // Extract material from notes field if junkType doesn't exist
-      else if (booking.notes) {
-        const materialMatch = booking.notes.match(/Material:\s*([^.]+)/i);
-        if (materialMatch) {
-          junkType = materialMatch[1].trim().toLowerCase();
-        }
-      }
-      
-      if (junkType) {
-        // Clean up the junk type (remove words like "& ", "and", etc.)
-        junkType = junkType.replace(/\s*&\s*/g, ' ').replace(/\s+and\s+/g, ' ').split(' ')[0];
-        junkTypeCounts[junkType] = (junkTypeCounts[junkType] || 0) + 1;
-      }
-    });
-    
-    // Map junk types to 6 main categories with colors
-    const mainCategories = {
-      'Paper': { color: "#22c55e", count: 0 },
-      'Plastic': { color: "#3b82f6", count: 0 },
-      'Metal': { color: "#f59e0b", count: 0 },
-      'Glass': { color: "#8b5cf6", count: 0 },
-      'Electronic': { color: "#ef4444", count: 0 },
-      'Other': { color: "#64748b", count: 0 }
-    };
-    
-    // Aggregate counts into main categories
-    Object.entries(junkTypeCounts).forEach(([type, count]) => {
-      if (type.includes('paper') || type.includes('cardboard')) {
-        mainCategories['Paper'].count += count;
-      } else if (type.includes('plastic') || type.includes('bottle')) {
-        mainCategories['Plastic'].count += count;
-      } else if (type.includes('metal') || type.includes('aluminum') || 
-                 type.includes('steel') || type.includes('copper') || type.includes('can')) {
-        mainCategories['Metal'].count += count;
-      } else if (type.includes('glass')) {
-        mainCategories['Glass'].count += count;
-      } else if (type.includes('electronic')) {
-        mainCategories['Electronic'].count += count;
-      } else {
-        // Everything else goes to "Other" category
-        mainCategories['Other'].count += count;
-      }
-    });
-    
-    // Convert to array and calculate percentages
-    const totalCount = Object.values(mainCategories).reduce((sum, cat) => sum + cat.count, 0);
-    
-    return Object.entries(mainCategories)
-      .map(([name, data]) => ({
-        name,
-        value: data.count,
-        color: data.color,
-        percentage: totalCount > 0 ? Math.round((data.count / totalCount) * 100) : 0
-      }))
-      .sort((a, b) => b.value - a.value); // Sort by count descending
-  })();
-
   return (
     <Layout title="Platform Analytics">
       <div className="space-y-6">
@@ -968,15 +1051,17 @@ export default function Analytics() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-3xl font-bold mb-2">Platform Analytics</h1>
-                <p className="text-green-100">Comprehensive insights and performance metrics</p>
+                <p className="text-green-100">Track and analyze waste management performance across all municipalities</p>
               </div>
-              <Button
-                onClick={() => setIsMunicipalityModalOpen(true)}
-                className="bg-white/20 text-white hover:bg-white/30"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Manage Municipalities
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setIsMunicipalityModalOpen(true)}
+                  className="bg-white/20 text-white hover:bg-white/30"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Manage Municipalities/Cities
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -1002,62 +1087,61 @@ export default function Analytics() {
             </CardHeader>
             <CardContent>
               {(() => {
-                // Calculate chart data
-                const chartData = monthlyRecyclables.map(month => {
-                  const totalWeight = Object.values(month.municipalities).reduce((sum, weight) => sum + weight, 0);
-                  return {
-                    month: month.month,
-                    weight: totalWeight
-                  };
-                });
+                // Calculate chart data from real analytics data
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const chartData = monthlyData.map((weight, index) => ({
+                  month: monthNames[index],
+                  weight: weight
+                }));
                 
                 // Check if there's any data
-                const hasData = chartData.some(d => d.weight > 0);
-                const totalCollected = chartData.reduce((sum, d) => sum + d.weight, 0);
+                const hasData = monthlyData.some(w => w > 0);
+                const totalCollected = monthlyData.reduce((sum, w) => sum + w, 0);
                 
                 return (
                   <>
                     {hasData && (
                       <div className="mb-3 text-sm text-gray-600">
-                        <span className="font-semibold text-green-600">{totalCollected.toFixed(1)} kg</span> collected this year from {bookings.length} bookings
+                        <span className="font-semibold text-green-600">{totalCollected.toFixed(1)} kg</span> collected this year
                       </div>
                     )}
-                    <ResponsiveContainer width="100%" height={250}>
-                      <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                        <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                        <XAxis 
-                          dataKey="month" 
-                          tick={{ fontSize: 12 }}
-                          angle={0}
-                          textAnchor="middle"
-                          height={60}
-                        />
-                        <YAxis 
-                          tick={{ fontSize: 12 }}
-                          label={{ value: 'Weight (kg)', angle: -90, position: 'insideLeft' }}
-                        />
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: 'white', 
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '6px'
-                          }}
-                          formatter={(value) => [`${value.toFixed(1)} kg`, 'Weight Collected']}
-                        />
-                        <Bar 
-                          dataKey="weight" 
-                          fill="#22c55e" 
-                          radius={[4, 4, 0, 0]}
-                          name="Total Collection"
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                    {!hasData && (
-                      <div className="text-center py-8 text-gray-500">
-                        <Recycle className="h-12 w-12 mx-auto mb-2 opacity-30" />
-                        <p className="text-sm">No collection data available yet</p>
-                        <p className="text-xs mt-1">Data will appear when bookings with estimated weight are recorded</p>
+                    {!hasData ? (
+                      <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                        <Package className="w-16 h-16 mb-4 opacity-50" />
+                        <p className="text-center font-medium">No collection data available yet</p>
+                        <p className="text-sm text-center">Data will appear when bookings with estimated weight are recorded</p>
                       </div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height={250}>
+                        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                          <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                          <XAxis 
+                            dataKey="month" 
+                            tick={{ fontSize: 12 }}
+                            angle={0}
+                            textAnchor="middle"
+                            height={60}
+                          />
+                          <YAxis 
+                            tick={{ fontSize: 12 }}
+                            label={{ value: 'Weight (kg)', angle: -90, position: 'insideLeft' }}
+                          />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: 'white', 
+                              border: '1px solid #e5e7eb',
+                              borderRadius: '6px'
+                            }}
+                            formatter={(value) => [`${value.toFixed(1)} kg`, 'Weight Collected']}
+                          />
+                          <Bar 
+                            dataKey="weight" 
+                            fill="#22c55e" 
+                            radius={[4, 4, 0, 0]}
+                            name="Total Collection"
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
                     )}
                   </>
                 );
@@ -1069,63 +1153,99 @@ export default function Analytics() {
           <Card className="bg-white border border-gray-200">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg font-semibold flex items-center">
-                <PieChartIcon className="h-5 w-5 mr-2" />
+                <PieChartIcon className="h-5 w-5 mr-2 text-green-600" />
                 Material Distribution
               </CardTitle>
               <p className="text-sm text-gray-600">Breakdown by waste categories</p>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col space-y-4">
-                {materialData.length > 0 ? (
+                {Object.keys(materialData).length > 0 ? (
                   <>
-                    <ResponsiveContainer width="100%" height={200}>
-                      <PieChart>
-                        <Pie
-                          data={materialData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={40}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                          stroke="none"
-                        >
-                          {materialData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip 
-                          contentStyle={{ 
-                            backgroundColor: 'white', 
-                            border: '1px solid #e5e7eb',
-                            borderRadius: '6px'
-                          }}
-                          formatter={(value, name, props) => [
-                            `${value} items (${props.payload.percentage}%)`, 
-                            props.payload.name
-                          ]} 
-                          labelStyle={{ display: 'none' }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="grid grid-cols-2 gap-2">
-                      {materialData.map((item, index) => (
-                        <div key={index} className="flex items-center space-x-2">
-                          <div 
-                            className="w-3 h-3 rounded-full" 
-                            style={{ backgroundColor: item.color }}
-                          />
-                          <span className="text-xs text-gray-600">{item.name}</span>
-                          <span className="text-xs font-medium ml-auto">{item.percentage}%</span>
-                        </div>
-                      ))}
-                    </div>
+                    {(() => {
+                      // Define colors for each material type
+                      const materialColors = {
+                        'Paper': '#22c55e',
+                        'Plastic': '#3b82f6',
+                        'Metal': '#eab308',
+                        'Glass': '#ef4444',
+                        'Electronic': '#a855f7',
+                        'Other': '#9ca3af'  // Gray color for Other
+                      };
+                      
+                      // Ensure all 6 main material types are included
+                      const allMaterials = {
+                        'Paper': materialData['Paper'] || 0,
+                        'Plastic': materialData['Plastic'] || 0,
+                        'Metal': materialData['Metal'] || materialData['Metals'] || 0,
+                        'Glass': materialData['Glass'] || 0,
+                        'Electronic': materialData['Electronic'] || materialData['Electronics'] || 0,
+                        'Other': materialData['Other'] || 0
+                      };
+                      
+                      const total = Object.values(allMaterials).reduce((sum, val) => sum + val, 0);
+                      const chartData = Object.entries(allMaterials)
+                        .filter(([name, value]) => value > 0) // Only show materials with data in chart
+                        .map(([name, value]) => ({
+                          name,
+                          value,
+                          color: materialColors[name],
+                          percentage: total > 0 ? Math.round((value / total) * 100) : 0
+                        }));
+                      
+                      return (
+                        <>
+                          <ResponsiveContainer width="100%" height={200}>
+                            <PieChart>
+                              <Pie
+                                data={chartData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={40}
+                                outerRadius={80}
+                                fill="#8884d8"
+                                dataKey="value"
+                                stroke="none"
+                              >
+                                {chartData.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.color} />
+                                ))}
+                              </Pie>
+                              <Tooltip 
+                                contentStyle={{ 
+                                  backgroundColor: 'white', 
+                                  border: '1px solid #e5e7eb',
+                                  borderRadius: '6px'
+                                }}
+                                formatter={(value, name, props) => [
+                                  `${value.toFixed(1)} kg (${props.payload.percentage}%)`, 
+                                  props.payload.name
+                                ]} 
+                                labelStyle={{ display: 'none' }}
+                              />
+                            </PieChart>
+                          </ResponsiveContainer>
+                          <div className="grid grid-cols-2 gap-2">
+                            {chartData.map((item, index) => (
+                              <div key={index} className="flex items-center space-x-2">
+                                <div 
+                                  className="w-3 h-3 rounded-full" 
+                                  style={{ backgroundColor: item.color }}
+                                />
+                                <span className="text-xs text-gray-600">{item.name}</span>
+                                <span className="text-xs font-medium ml-auto">{item.percentage}%</span>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      );
+                    })()}
                   </>
                 ) : (
-                  <div className="flex flex-col items-center justify-center py-12 text-gray-600">
-                    <Package className="h-12 w-12 mb-4 opacity-50" />
-                    <p className="text-lg font-medium">No Data Available</p>
-                    <p className="text-sm">Material distribution will appear with booking data</p>
+                  <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                    <Package className="h-16 w-16 mb-4 opacity-50" />
+                    <p className="text-center font-medium">No Data Available</p>
+                    <p className="text-sm text-center">Material distribution will appear with booking data</p>
                   </div>
                 )}
               </div>
@@ -1152,7 +1272,7 @@ export default function Analytics() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-green-600">Users</p>
-                        <p className="text-2xl font-bold text-green-900">{analyticsStats.totalUsers}</p>
+                        <p className="text-2xl font-bold text-green-900">{totalStats.totalUsers}</p>
                       </div>
                       <div className="w-10 h-10 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
                         <Users className="h-5 w-5 text-green-600" />
@@ -1166,24 +1286,24 @@ export default function Analytics() {
                   {/* Most Active Municipality */}
                   <div>
                     <div className="space-y-2 max-h-64 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                      {Object.entries(participationRates.byMunicipality)
-                        .sort(([,a], [,b]) => b.activeUsers - a.activeUsers)
-                        .map(([municipality, data]) => (
+                      {municipalityActivity.length > 0 ? (
+                        municipalityActivity.map((municipality) => (
                           <div 
-                            key={municipality} 
-                            className="flex justify-between items-center p-2 rounded cursor-pointer transition-colors bg-gray-50 hover:bg-gray-100"
-                            onClick={() => {
-                              setSelectedParticipationMunicipality(municipality);
-                              setIsParticipationModalOpen(true);
-                            }}
+                            key={municipality.name} 
+                            className="flex justify-between items-center p-3 rounded bg-gray-50 hover:bg-green-50 border border-gray-200 hover:border-green-300 cursor-pointer transition-all"
+                            onClick={() => handleMunicipalityClick(municipality.name)}
                           >
-                            <span className="text-sm font-medium">{municipality}</span>
+                            <div className="flex-1">
+                              <span className="text-sm font-medium text-gray-900">{municipality.name}</span>
+                            </div>
                             <div className="text-right">
-                              <span className="text-sm font-bold text-green-600">{data.totalUsers} users</span>
+                              <span className="text-sm font-bold text-green-600">{municipality.users} users</span>
                             </div>
                           </div>
                         ))
-                      }
+                      ) : (
+                        <p className="text-center text-gray-400 py-4">No municipality data available</p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1207,7 +1327,7 @@ export default function Analytics() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-green-600">Total Weight (kg)</p>
-                        <p className="text-2xl font-bold text-green-900">{analyticsStats.totalWeight.toLocaleString()}</p>
+                        <p className="text-2xl font-bold text-green-900">{totalStats.totalWeight.toLocaleString()}</p>
                       </div>
                       <div className="w-10 h-10 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
                         <Recycle className="h-5 w-5 text-green-600" />
@@ -1218,90 +1338,39 @@ export default function Analytics() {
               </div>
               
               <div className="space-y-2 max-h-64 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                {popularMaterialsByMunicipality.map((data, index) => (
-                  <div 
-                    key={data.municipality} 
-                    className="flex justify-between items-center p-2 bg-gray-50 rounded-lg border cursor-pointer hover:bg-gray-100 transition-colors"
-                    onClick={() => {
-                      setSelectedMaterialsMunicipality(data.municipality);
-                      setIsMaterialsModalOpen(true);
-                    }}
-                  >
-                    <span className="font-medium text-gray-800">{data.municipality}</span>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      data.totalBookings > 0 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-gray-100 text-gray-500'
-                    }`}>
-                      {data.displayWeight > 0 
-                        ? `${data.displayMaterial} - ${data.displayWeight.toFixed(1)} kg`
-                        : data.displayMaterial
-                      }
-                    </span>
+                {popularMaterials.length > 0 ? (
+                  popularMaterials.map((data) => (
+                    <div 
+                      key={data.municipality} 
+                      className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border hover:bg-green-50 hover:border-green-300 transition-colors cursor-pointer"
+                      onClick={() => handleMaterialMunicipalityClick(data.municipality)}
+                    >
+                      <div className="flex-1">
+                        <span className="font-medium text-gray-900">{data.municipality}</span>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        data.weight > 0 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        {data.weight > 0 
+                          ? `${data.topMaterial} - ${data.weight.toFixed(1)} kg`
+                          : data.topMaterial
+                        }
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+                    <Recycle className="w-12 h-12 mb-2 opacity-50" />
+                    <p className="text-center text-sm">No data</p>
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
-
-      {/* Participation by User Type Modal */}
-      <Dialog open={isParticipationModalOpen} onOpenChange={setIsParticipationModalOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center">
-              <Users className="h-5 w-5 mr-2 text-green-600" />
-              Participation by User Type
-              <span className="text-sm font-normal text-green-600 ml-2">
-                ({selectedParticipationMunicipality})
-              </span>
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 mt-4">
-            {Object.entries(participationRates.byRole)
-              .sort(([,a], [,b]) => b.totalUsers - a.totalUsers)
-              .map(([role, data]) => (
-                <div key={role} className="space-y-1">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium capitalize">{role.replace('_', ' ')}</span>
-                    <span className="text-lg font-bold text-green-600">{data.totalUsers} users</span>
-                  </div>
-                </div>
-              ))
-            }
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Materials Breakdown Modal */}
-      <Dialog open={isMaterialsModalOpen} onOpenChange={setIsMaterialsModalOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center">
-              <Package className="h-5 w-5 mr-2 text-green-600" />
-              Material Breakdown
-              <span className="text-sm font-normal text-green-600 ml-2">
-                ({selectedMaterialsMunicipality})
-              </span>
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 mt-4">
-            {selectedMaterialsMunicipality && getMaterialBreakdownForMunicipality(selectedMaterialsMunicipality).map((material, index) => (
-              <div key={material.material} className="space-y-1">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">{material.material}</span>
-                  <div className="text-right">
-                    <div className={`text-sm font-bold ${material.weight > 0 ? 'text-green-600' : 'text-gray-400'}`}>
-                      {material.weight.toFixed(1)} kg
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Municipality Management Dialog */}
       <Dialog open={isMunicipalityModalOpen} onOpenChange={setIsMunicipalityModalOpen}>
@@ -1309,7 +1378,7 @@ export default function Analytics() {
           <DialogHeader>
             <DialogTitle className="flex items-center">
               <Package className="h-5 w-5 mr-2 text-green-600" />
-              Manage Municipalities
+              Manage Municipalities/Cities
             </DialogTitle>
           </DialogHeader>
           
@@ -1317,12 +1386,12 @@ export default function Analytics() {
           <div className="space-y-4 border-b pb-4">
             <div className="flex gap-2">
               <div className="flex-1">
-                <Label htmlFor="newMunicipality">Add New Municipality</Label>
+                <Label htmlFor="newMunicipality">Add New Municipality/City</Label>
                 <Input
                   id="newMunicipality"
                   value={newMunicipality}
                   onChange={(e) => setNewMunicipality(e.target.value)}
-                  placeholder="Enter municipality name"
+                  placeholder="Enter municipality/city name"
                   onKeyPress={(e) => {
                     if (e.key === 'Enter') {
                       handleAddMunicipality();
@@ -1349,18 +1418,219 @@ export default function Analytics() {
                   key={municipality}
                   className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                 >
-                  <span className="font-medium">{municipality}</span>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDeleteMunicipality(municipality)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  {editingMunicipality === municipality ? (
+                    <>
+                      <Input
+                        value={editedMunicipalityName}
+                        onChange={(e) => setEditedMunicipalityName(e.target.value)}
+                        className="flex-1 mr-2"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            handleSaveEdit();
+                          }
+                        }}
+                        autoFocus
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleSaveEdit}
+                          className="bg-green-50 hover:bg-green-100 text-green-600 border-green-300"
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleCancelEdit}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-medium">{municipality}</span>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditMunicipality(municipality)}
+                          className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteMunicipality(municipality)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Municipality User Breakdown Dialog */}
+      <Dialog open={isMunicipalityBreakdownModalOpen} onOpenChange={setIsMunicipalityBreakdownModalOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Users className="h-5 w-5 mr-2 text-green-600" />
+              {selectedMunicipalityForBreakdown} - User Breakdown
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedMunicipalityForBreakdown && (() => {
+            const breakdown = getMunicipalityUserBreakdown(selectedMunicipalityForBreakdown);
+            return (
+              <div className="space-y-4">
+                {/* Total Users Summary */}
+                <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-green-600">Total Users</p>
+                        <p className="text-3xl font-bold text-green-900">{breakdown.total}</p>
+                      </div>
+                      <div className="w-12 h-12 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                        <Users className="h-6 w-6 text-green-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* User Type Breakdown */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-gray-700">User Types</h3>
+                  
+                  {/* Residents */}
+                  <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                        <Users className="h-5 w-5 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">Residents</p>
+                        <p className="text-xs text-gray-600">Regular platform users</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-green-600">{breakdown.residents}</p>
+                    </div>
+                  </div>
+
+                  {/* Collectors */}
+                  <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                        <Package className="h-5 w-5 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">Collectors</p>
+                        <p className="text-xs text-gray-600">Waste collection providers</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-green-600">{breakdown.collectors}</p>
+                    </div>
+                  </div>
+
+                  {/* Junkshops */}
+                  <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                        <Recycle className="h-5 w-5 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">Junkshops</p>
+                        <p className="text-xs text-gray-600">Recycling centers</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-green-600">{breakdown.junkshops}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Material Breakdown by Municipality Dialog */}
+      <Dialog open={isMaterialBreakdownModalOpen} onOpenChange={setIsMaterialBreakdownModalOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Recycle className="h-5 w-5 mr-2 text-green-600" />
+              {selectedMaterialMunicipality} - Material Breakdown
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedMaterialMunicipality && (() => {
+            const materialBreakdown = getMaterialBreakdownForMunicipality(selectedMaterialMunicipality);
+            // Sort by weight (highest first)
+            const sortedMaterials = materialBreakdown.sort((a, b) => b.weight - a.weight);
+            const totalWeight = sortedMaterials.reduce((sum, item) => sum + item.weight, 0);
+            
+            return (
+              <div className="space-y-4">
+                {/* Total Weight Summary */}
+                <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-green-600">Total Weight</p>
+                        <p className="text-3xl font-bold text-green-900">{totalWeight.toFixed(1)} kg</p>
+                      </div>
+                      <div className="w-12 h-12 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                        <Recycle className="h-6 w-6 text-green-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Material Breakdown */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-gray-700">Material Types</h3>
+                  
+                  {sortedMaterials.map((material, index) => (
+                    <div 
+                      key={material.material}
+                      className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-500 bg-opacity-20 rounded-lg flex items-center justify-center">
+                          <Recycle className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">{material.material}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold text-green-600">{material.weight.toFixed(1)} kg</p>
+                      </div>
+                    </div>
+                  ))}
+
+                  {totalWeight === 0 && (
+                    <div className="flex flex-col items-center justify-center py-8 text-gray-400">
+                      <Recycle className="w-12 h-12 mb-2 opacity-50" />
+                      <p className="text-center text-sm">No material data available</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </Layout>

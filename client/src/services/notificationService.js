@@ -227,6 +227,10 @@ export class NotificationService {
         { ...data, operationId, campaignId }
       );
 
+      // Send push notifications (in background, don't wait for it)
+      sendPushNotifications(title, message, userTypeFilter, { ...data, campaignId })
+        .catch(error => console.error('Error sending push notifications:', error));
+
       // Update campaign status to completed
       await this.updateCampaignStatus(campaignId, 'completed', notificationsSent);
 
@@ -562,6 +566,41 @@ export function useCampaigns(filters = {}) {
   }, [filters.limit]);
 
   return { campaigns, loading, error };
+}
+
+/**
+ * Send push notifications via API
+ * @param {string} title - Notification title
+ * @param {string} body - Notification body
+ * @param {string} userTypeFilter - User type filter
+ * @param {object} data - Additional data
+ */
+export async function sendPushNotifications(title, body, userTypeFilter = 'all', data = {}) {
+  try {
+    const response = await fetch('/api/push-notifications/send-to-all', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        title,
+        body,
+        userTypeFilter,
+        data
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to send push notifications');
+    }
+    
+    const result = await response.json();
+    console.log('Push notifications sent:', result);
+    return result;
+  } catch (error) {
+    console.error('Error sending push notifications:', error);
+    throw error;
+  }
 }
 
 export default NotificationService;

@@ -492,7 +492,6 @@ export default function Moderation() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="warning_issued">Issue Warning</SelectItem>
-                    <SelectItem value="content_removed">Remove Content</SelectItem>
                     <SelectItem value="user_suspended">Suspend User</SelectItem>
                     <SelectItem value="account_banned">Ban Account</SelectItem>
                   </SelectContent>

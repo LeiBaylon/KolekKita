@@ -1,8 +1,12 @@
 import { createServer } from "http";
 import { storage } from "./storage.js";
 import { insertJunkShopSchema } from "../shared/schema.js";
+import pushNotificationRoutes from './pushNotificationRoutes.js';
 
 export async function registerRoutes(app) {
+  // Push Notification API routes
+  app.use('/api/push-notifications', pushNotificationRoutes);
+
   // Junk Shop API routes
   app.get("/api/junk-shops", async (req, res) => {
     try {

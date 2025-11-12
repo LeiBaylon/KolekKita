@@ -199,10 +199,15 @@ export default function Notifications() {
                     <DialogHeader>
                       <DialogTitle>Send New Notification</DialogTitle>
                       <DialogDescription>
-                        Send a notification to users in the system
+                        Send in-app notifications to users
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
+                      <Alert className="bg-blue-50 border-blue-200">
+                        <AlertDescription className="text-sm text-blue-800">
+                          This will send in-app notifications that users will see when they open the app.
+                        </AlertDescription>
+                      </Alert>
                       <div>
                         <Label htmlFor="userType">Send To</Label>
                         <Select value={targetUserType} onValueChange={setTargetUserType}>
@@ -261,6 +266,28 @@ export default function Notifications() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Admin Info Card */}
+        {user && user.role === 'admin' && (
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-3">
+                <Bell className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-medium text-blue-900">Administrator Notification Info</p>
+                  <p className="text-sm text-blue-800">
+                    As an administrator, you can send <strong>in-app notifications</strong> to users.
+                  </p>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-blue-800 mt-2">
+                    <li><strong>In-App Notifications:</strong> Stored in the database and visible when users open the app</li>
+                    <li>Notifications are sent to all users or specific user types</li>
+                    <li>Admins are excluded from receiving notifications</li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Notification Campaigns List */}
         <Card className="bg-white border border-gray-200">
